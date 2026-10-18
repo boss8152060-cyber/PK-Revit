@@ -1,0 +1,9 @@
+*.mp4
+*.mov
+*.avi
+Clip/
+frames/
+__pycache__/
+*.pyc
+bin/
+obj/
