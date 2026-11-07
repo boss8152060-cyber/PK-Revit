@@ -275,9 +275,26 @@ if not STEPS:
 out.print_md(u"# 🏠 Roof Master — เริ่มสร้างโครงหลังคา ({} ขั้น)".format(
     len(STEPS)))
 
+def _framing_ids():
+    """ElementId (int) ของโครงเหล็กและเสาทั้งหมดตอนนี้ — ไว้นับของที่แต่ละขั้นสร้างจริง"""
+    ids = set()
+    for bic in (DB.BuiltInCategory.OST_StructuralFraming,
+                DB.BuiltInCategory.OST_StructuralColumns):
+        for e in DB.FilteredElementCollector(doc).OfCategory(bic) \
+                   .WhereElementIsNotElementType():
+            try:
+                ids.add(e.Id.Value)
+            except Exception:
+                ids.add(e.Id.IntegerValue)
+    return ids
+
+
 tg = DB.TransactionGroup(doc, "PK Revit - Roof Master")
 tg.Start()
 done, failed = [], None
+skipped = []          # ขั้นที่ข้ามเพราะไม่มีงานให้ทำ (เช่น ไม่มีราง) ไม่ใช่ความผิดพลาด
+created = []          # (ชื่อขั้น, จำนวนชิ้นที่สร้างจริง)
+_before = _framing_ids()
 for title, folder, ovr in STEPS:
     out.print_md(u"\n---\n\n# ▶ {}".format(title))
     path = step_path(folder)
@@ -286,16 +303,25 @@ for title, folder, ovr in STEPS:
         execfile(path, g)
         done.append(title)
     except SystemExit:
-        # ปุ่มลูกหยุดเอง (forms.alert exitscript) — ข้อความแจ้งขึ้นไปแล้ว
-        failed = title
-        out.print_md(u"\n⚠ **{} หยุดกลางทาง** (ดูกล่องข้อความ/รายงานข้างบน) "
-                     u"— ขั้นถัดไปไม่รัน".format(title))
-        break
+        if g.get("STEP_SKIPPED"):
+            # engine แจ้งว่าไม่มีงานให้ทำ (เช่น หลังคาไม่มีราง) — ข้ามแล้วทำขั้นต่อไป
+            skipped.append(title)
+            out.print_md(u"\nℹ **{} ข้าม** — ไม่มีงานให้ทำกับหลังคานี้".format(title))
+        else:
+            # ปุ่มลูกหยุดเอง (forms.alert exitscript) — ข้อความแจ้งขึ้นไปแล้ว
+            failed = title
+            out.print_md(u"\n⚠ **{} หยุดกลางทาง** (ดูกล่องข้อความ/รายงานข้างบน) "
+                         u"— ขั้นถัดไปไม่รัน".format(title))
+            break
     except Exception:
         failed = title
         out.print_md(u"\n❌ **{} ผิดพลาด:**\n```\n{}\n```".format(
             title, traceback.format_exc()))
         break
+    finally:
+        _after = _framing_ids()
+        created.append((title, len(_after - _before)))
+        _before = _after
 try:
     tg.Assimilate()
 except Exception:
@@ -341,29 +367,22 @@ def _count_framing():
 
 
 def _summary_lines():
-    counts = _count_framing()
+    """จำนวนที่แต่ละขั้นสร้างจริง (นับจาก element ใหม่ ไม่ใช่นับตามชื่อ type
+    เพราะผู้ใช้อาจเลือก type เดียวกันให้หลายขั้น)"""
     lines = []
-    for label, chosen, kws in (
-            (u"ตะเข้สัน", T_HIP, [u"ตะเข้สัน"]),
-            (u"อกไก่", T_RIDGE, [u"อกไก่"]),
-            (u"แป", T_PURLIN, [u"แป"]),
-            (u"จันทัน", T_RAFTER, [u"จันทัน"]),
-            (u"รางน้ำ", T_GUTTER, [u"รางน้ำ"]),
-            (u"ดั้ง", T_DANG, [u"ดั้ง"]),
-            (u"ตะเข้ราง", None, [u"ตะเข้ราง"])):
-        if chosen:
-            n = counts.get(chosen, 0)
+    for title, n in created:
+        if title in skipped:
+            lines.append(u"{}: ข้าม (ไม่มีงานให้ทำ)".format(title))
         else:
-            n = sum(c for nm, c in counts.items()
-                    if all(k in nm for k in kws))
-        lines.append(u"{}: {} ตัว".format(label, n))
+            lines.append(u"{}: สร้าง {} ชิ้น".format(title, n))
     return lines
 
 
 # สรุปผลเป็น popup สั้นๆ — รายละเอียดเต็มอยู่ในหน้าต่าง output
 _head = (u"❌ หยุดที่ขั้น {} — ดูรายละเอียดในหน้าต่าง output".format(failed)
-         if failed else u"✅ โครงหลังคาพร้อมแล้ว ({}/{} ขั้น)".format(
-             len(done), len(STEPS)))
+         if failed else u"✅ โครงหลังคาพร้อมแล้ว (สำเร็จ {}/{} ขั้น{})".format(
+             len(done), len(STEPS),
+             u", ข้าม {} ขั้น".format(len(skipped)) if skipped else u""))
 forms.alert(_head + u"\n\n" + u"\n".join(_summary_lines()) +
             u"\n\nCtrl+Z ครั้งเดียว ย้อนทั้งชุด",
             title=u"PK Revit — Roof Master")
