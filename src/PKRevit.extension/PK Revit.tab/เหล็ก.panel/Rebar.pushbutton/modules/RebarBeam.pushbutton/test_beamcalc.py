@@ -2,7 +2,7 @@
 """unit test ของ revotech.beamcalc (รันนอก Revit): python test_beamcalc.py"""
 import os, sys, unittest
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                "..", "..", "..", "lib"))
+                                "..", "..", "..", "..", "..", "lib"))
 from revotech import beamcalc as bc
 
 

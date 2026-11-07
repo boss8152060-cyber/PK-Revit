@@ -9,7 +9,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                "..", "..", "..", "lib"))
+                                "..", "..", "..", "..", "lib"))
 from revotech import hostconfig as hc
 from revotech import presetlogic as pl
 from revotech import presetstore as ps

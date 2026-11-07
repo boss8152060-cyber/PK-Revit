@@ -1,0 +1,46 @@
+<StackPanel>
+<StackPanel.Resources>
+    <Style x:Key="PkBig" TargetType="Button">
+        <Setter Property="Margin" Value="0,0,0,8"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="bg" Background="{StaticResource Field}"
+                            BorderBrush="{StaticResource Line}" BorderThickness="1"
+                            CornerRadius="9" Padding="16,11">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bg" Property="BorderBrush" Value="#111111"/>
+                            <Setter TargetName="bg" Property="Background" Value="#EDEDED"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="bg" Property="Background" Value="#DDDDDD"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</StackPanel.Resources>
+<TextBlock x:Name="tb_info" FontSize="12" TextWrapping="Wrap"
+           Foreground="{StaticResource TxtDim}" Margin="0,0,0,10"/>
+<Button x:Name="hub_master" Style="{StaticResource PkBig}">
+    <StackPanel>
+        <TextBlock Text="โครงหลังคา (Roof Master)" FontSize="16" FontWeight="Bold"/>
+        <TextBlock Text="ตะเข้สัน/อกไก่ → แป → รางน้ำ → จันทัน → ดั้ง" FontSize="11.5" Foreground="{StaticResource TxtDim}"
+                   TextWrapping="Wrap" Margin="0,2,0,0"/>
+    </StackPanel>
+</Button>
+<Button x:Name="hub_cover" Style="{StaticResource PkBig}">
+    <StackPanel>
+        <TextBlock Text="วัสดุมุง (Roof Cover)" FontSize="16" FontWeight="Bold"/>
+        <TextBlock Text="สร้างวัสดุมุงบนหลังคาที่เลือก — ทำหลังโครงหลังคา" FontSize="11.5" Foreground="{StaticResource TxtDim}"
+                   TextWrapping="Wrap" Margin="0,2,0,0"/>
+    </StackPanel>
+</Button>
+<Border Height="14"/>
+</StackPanel>

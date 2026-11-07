@@ -5,7 +5,7 @@ import sys
 import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", "..", "..", "lib", "revotech"))
+sys.path.insert(0, os.path.join(HERE, "..", "..", "..", "..", "lib", "revotech"))
 import managecalc as mc  # noqa: E402
 
 

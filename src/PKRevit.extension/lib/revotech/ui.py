@@ -26,7 +26,7 @@ _WINDOW_XAML = u"""<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/p
     </Window.Resources>
     <Border Background="{{StaticResource Card}}" CornerRadius="14"
             BorderBrush="#BDBDBD" BorderThickness="1" Padding="0">
-        <StackPanel>
+        {inner_open}
             <Grid x:Name="title_bar" Background="Transparent" Margin="24,18,16,0">
                 <StackPanel Orientation="Horizontal">
                     <Border Width="38" Height="38" Background="#FFFFFF" BorderBrush="#111111"
@@ -76,10 +76,23 @@ _WINDOW_XAML = u"""<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/p
                 </Button.Template>
                 <TextBlock Text="{run_text}" Foreground="White"/>
             </Button>
-        </StackPanel>
+        {inner_close}
     </Border>
 </Window>
 """
+
+# โครงด้านในการ์ด: ปกติ = StackPanel เดียว; preview=True = 2 คอลัมน์ (ซ้าย preview 3D / ขวา ฟอร์มเดิม)
+_INNER_PLAIN = (u"<StackPanel>", u"</StackPanel>")
+_INNER_PREVIEW = (
+    u"""<Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{pw}"/><ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Border x:Name="preview_host" Grid.Column="0" Background="#F3F4F6"
+                    CornerRadius="13,0,0,13" ClipToBounds="True" MinHeight="460"
+                    BorderBrush="#E0E0E0" BorderThickness="0,0,1,0"/>
+            <StackPanel Grid.Column="1">""",
+    u"</StackPanel></Grid>")
 
 
 _PRESET_BAR = u"""            <StackPanel Margin="24,10,24,0">
@@ -132,10 +145,15 @@ class RevoWindow(forms.WPFWindow):
     ชื่อควบคุมที่ได้เสมอ: title_bar, close_btn, run_btn
     การใช้: คลาสลูก override __init__ แล้วต่อ event ของช่องที่ตัวเองประกาศใน body
     ผู้ใช้กดปุ่มรัน → self.values ถูกตั้งโดยลูก (override collect()) แล้วปิดหน้าต่าง
+
+    preview=True: แบ่งหน้าต่างเป็น 2 ส่วน ซ้าย = พื้นที่ 3D preview (กว้าง preview_width px)
+    ขวา = ฟอร์มเดิม; ได้ self.preview (Preview3D) ให้เรียก .update(scene)/.schedule(fn)
+    ค่าตั้งต้น preview=False ทำงานเหมือนเดิมทุกประการ
     """
 
     def __init__(self, body_path, title_white, title_accent, subtitle,
-                 run_text, width=470, max_height=640):
+                 run_text, width=470, max_height=640, preview=False,
+                 preview_width=460):
         module = os.path.basename(
             os.path.dirname(os.path.abspath(body_path))).replace(".pushbutton", "")
         presetbar = u"" if module in _NO_PRESET else _PRESET_BAR
@@ -143,13 +161,28 @@ class RevoWindow(forms.WPFWindow):
             theme = f.read()
         with io.open(body_path, encoding="utf-8") as f:
             body = f.read()
+        if preview:
+            inner_open = _INNER_PREVIEW[0].format(pw=preview_width)
+            inner_close = _INNER_PREVIEW[1]
+            width = width + preview_width
+        else:
+            inner_open, inner_close = _INNER_PLAIN
         xaml = _WINDOW_XAML.format(
+            inner_open=inner_open, inner_close=inner_close,
             title=title_white + title_accent, width=width, theme=theme,
             body=body, t1=title_white, t2=title_accent, subtitle=subtitle,
             run_text=run_text, maxh=max_height, presetbar=presetbar)
         forms.WPFWindow.__init__(self, xaml, literal_string=True)
         self.values = None
+        self.preview = None     # Preview3D (revotech.preview3d) เมื่อ preview=True
         self.preset_module = module
+        if preview:
+            try:
+                from revotech.preview3d import Preview3D
+                self.preview = Preview3D()
+                self.preview_host.Child = self.preview.view
+            except Exception:
+                self.preview = None     # preview พังต้องไม่ทำให้ฟอร์มหลักเปิดไม่ได้
         self.run_btn.Click += self._on_run
         self.close_btn.Click += self._on_close
         self.title_bar.MouseLeftButtonDown += self._on_drag

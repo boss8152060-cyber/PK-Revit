@@ -20,6 +20,7 @@ import traceback
 from System.Collections.Generic import List
 from pyrevit import revit, DB, forms, script
 
+from revotech import dispatch
 from revotech import hostconfig
 from revotech import hostpick
 from revotech import ui
@@ -94,14 +95,13 @@ def _native_propagate(source):
 
 
 def _module_path(kind):
+    """หาสคริปต์โมดูลเหล็ก: เก็บอยู่ที่ <panel>/Rebar.pushbutton/modules/<โมดูล>.pushbutton
+    (script.py หรือ <ชื่อโมดูล>.py) — ลองโฟลเดอร์พี่น้องแบบเดิมเป็นทางสำรอง"""
     here = os.path.dirname(os.path.abspath(__file__))
-    folder = hostconfig.KINDS[kind]
-    base = folder.replace(u".pushbutton", u"")
-    for c in (os.path.join(os.path.dirname(here), folder, "script.py"),
-              os.path.join(os.path.dirname(here), folder, base + ".py")):
-        if os.path.isfile(c):
-            return c
-    return None
+    panel = os.path.dirname(os.path.dirname(here))      # เหล็ก.panel
+    dirs = [os.path.join(panel, u"Rebar.pushbutton", u"modules"),
+            os.path.dirname(here)]
+    return dispatch.find_in_dirs(dirs, hostconfig.KINDS[kind])
 
 
 # ------------------------------------------------------------ 1) ต้นทาง

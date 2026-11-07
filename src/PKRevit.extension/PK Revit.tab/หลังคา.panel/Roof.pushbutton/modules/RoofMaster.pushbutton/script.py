@@ -98,7 +98,10 @@ def _save_last(d):
 
 class MasterForm(forms.WPFWindow):
     def __init__(self):
-        forms.WPFWindow.__init__(self, script.get_bundle_file("ui.xaml"))
+        # หาไฟล์จากโฟลเดอร์ของสคริปต์นี้เอง (ไม่ใช้ get_bundle_file เพราะเมื่อถูกเรียก
+        # ผ่านปุ่ม Roof จะชี้ไปโฟลเดอร์ปุ่ม Roof แทน)
+        forms.WPFWindow.__init__(self, os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "ui.xaml"))
         self.values = None
         self._busy = False
         self.run_btn.Click += self._go
