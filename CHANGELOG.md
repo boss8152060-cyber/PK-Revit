@@ -4,6 +4,9 @@
 
 | เวอร์ชัน | สิ่งที่เปลี่ยน | ทดสอบ |
 |---|---|---|
+| 0.10.0 | แผง Manage ตาม PK Tool แต่ดีกว่า: Select Rebar, Select Host, Delete Rebar (ยืนยันก่อนลบ, ลบเฉพาะของ PK Revit ได้), Show/Hide Obscured, Rebar Collision (bbox แล้วตรวจ solid จริง + clearance + CSV), Color by Parameter (หลาย view, Reset เฉพาะที่ระบาย), Propagate Rebar, Preset (Local/Project), จำค่าต่อ element (ExtensibleStorage) | syntax + unit test + โหลด XAML ใน WPF |
+| 0.9.0 | lib `reinforcement` (หาเหล็กบน host รวม Area/Path/Fabric) และ `hostpick` (เลือกทีละตัว/ตาม Mark) | syntax |
+| 0.8.1 | เพิ่มไฟล์ family ใบมีด miter ที่ engine Roof Master ใช้ | — |
 | 0.8.0 | เปลี่ยนชื่อเป็น **PK Revit** (แท็บ/แผง/ชื่อหน้าต่าง/โฟลเดอร์ `src/PKRevit.extension`), ธีมใหม่ขาว-ดำแบบ PK (ไม่มีส้ม) พร้อมโลโก้ PK, ไอคอนปุ่มทุกตัว (ปกติ+dark), ตัวมาร์ก Comments เปลี่ยนเป็น `PKRevit:` และโฟลเดอร์ log เป็น `%LOCALAPPDATA%\PKRevit` | syntax + unit test + render XAML ด้วย WPF จริง |
 | 0.7.2 | โมดูลเหล็กทั้ง 5: dropdown ดึง Rebar Bar Type ทุกชนิดจากโปรเจกต์ เรียงตามขนาด | syntax + unit test |
 | 0.7.1 | Roof Master: dropdown ดึง "Family : Type" จริง จำค่าที่เลือกล่าสุด (`%LOCALAPPDATA%\PKRevit\roofmaster_last.json`) | syntax |
