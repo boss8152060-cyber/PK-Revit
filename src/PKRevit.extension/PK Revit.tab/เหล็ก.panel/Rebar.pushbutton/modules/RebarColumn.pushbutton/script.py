@@ -19,6 +19,7 @@ from pyrevit import revit, DB, forms, script
 from revotech import rebar as rb
 from revotech import hostconfig
 from revotech import ui
+from revotech import formpreview as fpv
 from revotech.rvt import ename, id_value, selected, type_name
 from revotech.units import mm_to_ft, ft_to_mm
 
@@ -85,13 +86,15 @@ def main_positions(n, x0, x1, y0, y1):
 
 # ---------------------------------------------------------------- form
 class ColumnForm(ui.RevoWindow):
-    def __init__(self, n_sel, bar_types):
+    def __init__(self, n_sel, bar_types, preview_ext=None):
         body = os.path.join(os.path.dirname(__file__), "body.xaml")
         ui.RevoWindow.__init__(
             self, body, u"REBAR ", u"เสา",
             u"ใส่เหล็กยืน + ปลอก ให้เสาที่เลือก — PK Revit",
-            u"สร้างเหล็กเสา")
+            u"สร้างเหล็กเสา", preview=True)
         self.bar_types = bar_types
+        self.n_sel = n_sel
+        self.preview_ext = preview_ext     # (w,h,H) มม. ของเสาต้นแรก หรือ None
         self.tb_info.Text = u"เสาที่เลือก: {} ต้น".format(n_sel)
         ui.combo_fill(self.cmb_n, [4, 6, 8, 10, 12, 14, 16], 4)
         have = rb.names_in_project(bar_types)
@@ -101,6 +104,21 @@ class ColumnForm(ui.RevoWindow):
         ui.combo_fill(self.cmb_tie, have_t or rb.TIE_BAR_NAMES, u"RB9"
                       if u"RB9" in have_t else None)
         self._check()
+        fpv.bind(self, self._scene, lambda: fpv.column_preview(self.preview_ext, {}, self.n_sel))
+
+    def _scene(self):
+        """ภาพประมาณของเสาต้นแรก — ไม่ตรวจ Bar Type ในโปรเจกต์ (แค่ดูขนาดจากชื่อ)"""
+        def dia(c):
+            s = c.SelectedItem
+            return fpv.dia_mm(s) if s else None
+        v = {"n": int(self.cmb_n.SelectedItem or 4),
+             "d_main": dia(self.cmb_main), "d_tie": dia(self.cmb_tie),
+             "lap_d": ui.num(self.tb_lap.Text, rb.LAP_D),
+             "sp_mid": ui.num(self.tb_sp_mid.Text, 0.15) * 1000.0,
+             "sp_end": ui.num(self.tb_sp_end.Text, 0.10) * 1000.0,
+             "end_len": ui.num(self.tb_end_len.Text, 0.60) * 1000.0,
+             "cover": ui.num(self.tb_cover.Text, 0.025) * 1000.0}
+        return fpv.column_preview(self.preview_ext, v, self.n_sel)
 
     def _check(self):
         missing = [] if self.bar_types else [u"(ไม่มี Bar Type เลย)"]
@@ -133,6 +151,18 @@ class ColumnForm(ui.RevoWindow):
         }
 
 
+def preview_extents(col):
+    """(w,h,H) มม. ของเสาสำหรับ preview หรือ None (อ่านไม่ได้)"""
+    try:
+        e = local_extents(col)
+        if e is None:
+            return None
+        _tf, x0, x1, y0, y1, z0, z1 = e
+        return (ft_to_mm(x1 - x0), ft_to_mm(y1 - y0), ft_to_mm(z1 - z0))
+    except Exception:
+        return None
+
+
 # ---------------------------------------------------------------- main
 try:
     _OVR = CONFIG_OVERRIDE      # Propagate Rebar: รันโดยไม่เปิดฟอร์ม
@@ -144,7 +174,7 @@ if _OVR is None:
     cols = selected(uidoc, doc, DB.BuiltInCategory.OST_StructuralColumns)
     if not cols:
         ui.need_selection(u"เสา", u"(คลิกเสาที่ต้องการ แล้วกดปุ่มใหม่ — เลือกได้หลายต้น)")
-    form = ColumnForm(len(cols), types)
+    form = ColumnForm(len(cols), types, preview_extents(cols[0]))
     v = form.show()
     if not v:
         script.exit()

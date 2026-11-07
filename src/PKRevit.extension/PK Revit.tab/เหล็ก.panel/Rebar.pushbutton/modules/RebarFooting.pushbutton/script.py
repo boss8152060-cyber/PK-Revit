@@ -24,6 +24,7 @@ import footing_calc as fc  # noqa: E402
 from revotech import rebar as rb  # noqa: E402
 from revotech import hostconfig  # noqa: E402
 from revotech import ui  # noqa: E402
+from revotech import formpreview as fpv  # noqa: E402
 from revotech.rvt import ename, id_value, selected, type_name  # noqa: E402
 from revotech.units import mm_to_ft, ft_to_mm  # noqa: E402
 
@@ -105,13 +106,15 @@ def footprint(inst):
 
 # ---------------------------------------------------------------- form
 class FootingForm(ui.RevoWindow):
-    def __init__(self, n_sel, n_rect, n_tri, n_other, bar_types):
+    def __init__(self, n_sel, n_rect, n_tri, n_other, bar_types, preview_shape=None):
         body = os.path.join(os.path.dirname(__file__), "body.xaml")
         ui.RevoWindow.__init__(
             self, body, u"REBAR ", u"ฐานราก",
             u"ใส่ตะแกรงเหล็กล่าง + เหล็กรัดรอบ ให้ฐานรากที่เลือก — PK Revit",
-            u"สร้างเหล็กฐานราก", max_height=680)
+            u"สร้างเหล็กฐานราก", max_height=680, preview=True)
         self.bar_types = bar_types
+        self.n_sel = n_sel
+        self.preview_shape = preview_shape   # {poly,kind,height} ของฐานแรก หรือ None
         self.has_rect = n_rect > 0
         self.has_tri = n_tri > 0
         info = u"ฐานรากที่เลือก: {} ฐาน (สี่เหลี่ยม {} · สามเหลี่ยม {})".format(
@@ -141,9 +144,22 @@ class FootingForm(ui.RevoWindow):
         for r in (self.rb_h1, self.rb_h2, self.rb_h3, self.cb_ring):
             r.Click += self._changed
         self._check()
+        fpv.bind(self, self._scene,
+                 lambda: fpv.footing_preview(fc, self.preview_shape, self._read_safe(), self.n_sel))
 
     def _changed(self, sender, args):
         self._check()
+
+    def _read_safe(self):
+        try:
+            return self._read()
+        except Exception:
+            return {"long": (None, 0), "short": (None, 0), "tri": {}, "hook": None,
+                    "ring": (False, None, 0, 0), "cover": 0}
+
+    def _scene(self):
+        """ภาพประมาณของฐานรากแรก — ใช้ footing_calc.plan_mat ตัวเดียวกับที่สร้างจริง"""
+        return fpv.footing_preview(fc, self.preview_shape, self._read(), self.n_sel)
 
     def _sel(self, cmb):
         s = cmb.SelectedItem
@@ -239,8 +255,18 @@ def _count(fl):
 
 
 nr, nt, no = _count(foots)
+
+
+def _preview_shape(f):
+    """ผังฐานแรกสำหรับ preview หรือ None"""
+    p = fps.get(id_value(f.Id))
+    if not p:
+        return None
+    return {"poly": p["poly"], "kind": p["kind"], "height": p["height"]}
+
+
 if _OVR is None:
-    form = FootingForm(len(foots), nr, nt, no, types)
+    form = FootingForm(len(foots), nr, nt, no, types, _preview_shape(foots[0]))
     v = form.show()
     if not v:
         script.exit()

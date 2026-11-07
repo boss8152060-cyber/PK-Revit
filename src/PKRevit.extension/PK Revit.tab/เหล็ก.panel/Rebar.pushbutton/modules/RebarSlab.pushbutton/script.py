@@ -23,6 +23,7 @@ import slab_calc as sc  # noqa: E402
 from revotech import rebar as rb  # noqa: E402
 from revotech import hostconfig  # noqa: E402
 from revotech import ui  # noqa: E402
+from revotech import formpreview as fpv  # noqa: E402
 from revotech.rvt import ename, id_value, selected, type_name  # noqa: E402
 from revotech.units import mm_to_ft, ft_to_mm  # noqa: E402
 
@@ -161,13 +162,15 @@ def _host_id(el):
 
 # ---------------------------------------------------------------- form
 class SlabForm(ui.RevoWindow):
-    def __init__(self, n_sel, n_bad, bar_types, fabric_types):
+    def __init__(self, n_sel, n_bad, bar_types, fabric_types, preview_shape=None):
         body = os.path.join(os.path.dirname(__file__), "body.xaml")
         ui.RevoWindow.__init__(
             self, body, u"REBAR ", u"พื้น",
             u"เหล็กเส้น / ไวร์เมช ให้พื้นที่เลือก — PK Revit",
-            u"สร้างเหล็กพื้น", max_height=680)
+            u"สร้างเหล็กพื้น", max_height=680, preview=True)
         self.bar_types = bar_types
+        self.n_sel = n_sel
+        self.preview_shape = preview_shape   # ผล slab_shape ของพื้นแรก หรือ None
         self.fabric_names = sorted(fabric_types.keys())
         info = u"พื้นที่เลือก: {} ผืน".format(n_sel)
         if n_bad:
@@ -191,9 +194,15 @@ class SlabForm(ui.RevoWindow):
         for r in (self.rb_bar, self.rb_mesh, self.cb_edge):
             r.Click += self._changed
         self._check()
+        fpv.bind(self, self._scene,
+                 lambda: fpv.slab_preview(sc, self.preview_shape, {"mode": sc.MODE_BAR, "layers": {}, "cover": 0}, self.n_sel))
 
     def _changed(self, sender, args):
         self._check()
+
+    def _scene(self):
+        """ภาพประมาณของพื้นแรก — ใช้ slab_calc.plan_layers ตัวเดียวกับที่สร้างจริง"""
+        return fpv.slab_preview(sc, self.preview_shape, self._read(), self.n_sel)
 
     def _sel(self, cmb):
         s = cmb.SelectedItem
@@ -276,7 +285,7 @@ for f in floors:
 n_bad = sum(1 for s in shapes.values() if s is None or "error" in s)
 
 if _OVR is None:
-    form = SlabForm(len(floors), n_bad, types, fabrics)
+    form = SlabForm(len(floors), n_bad, types, fabrics, shapes.get(id_value(floors[0].Id)))
     v = form.show()
     if not v:
         script.exit()

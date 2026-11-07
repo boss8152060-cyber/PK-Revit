@@ -18,6 +18,7 @@ from pyrevit import revit, DB, forms, script
 
 from revotech import rebar as rb
 from revotech import ui
+from revotech import formpreview as fpv
 from revotech import hostconfig
 from revotech import beamcalc as bc
 from revotech.rvt import ename, id_value, selected, type_name
@@ -103,13 +104,15 @@ def hook90(doc_, mult):
 
 # ---------------------------------------------------------------- form
 class BeamForm(ui.RevoWindow):
-    def __init__(self, n_sel, bar_types):
+    def __init__(self, n_sel, bar_types, preview_ext=None):
         body = os.path.join(os.path.dirname(__file__), "body.xaml")
         ui.RevoWindow.__init__(
             self, body, u"REBAR ", u"คาน",
             u"ใส่เหล็กบน/ล่าง เสริมพิเศษ เหล็กข้าง ปลอก ให้คานที่เลือก — PK Revit",
-            u"สร้างเหล็กคาน", max_height=600)
+            u"สร้างเหล็กคาน", max_height=600, preview=True)
         self.bar_types = bar_types
+        self.n_sel = n_sel
+        self.preview_ext = preview_ext     # (L,b,h) มม. ของคานตัวแรก หรือ None
         self.tb_info.Text = u"คานที่เลือก: {} ตัว".format(n_sel)
         have = rb.names_in_project(bar_types) or rb.MAIN_BAR_NAMES
         sel = u"DB16" if u"DB16" in have else None
@@ -131,6 +134,28 @@ class BeamForm(ui.RevoWindow):
                                   .format(u", ".join(missing)))
         else:
             self.tb_check.Text = u"✓ พบ Rebar Bar Type {} ชนิดในโปรเจกต์".format(len(bar_types))
+        fpv.bind(self, self._scene, lambda: fpv.beam_preview(self.preview_ext, None, self.n_sel))
+
+    def _scene(self):
+        """ภาพประมาณของคานตัวแรก — ใช้ build_spec/beamcalc ตัวเดียวกับที่สร้างจริง ไม่ตรวจ Bar Type"""
+        g = dict((nm, self._grp(nm)) for nm in
+                 ("top1", "top2", "bot1", "bot2", "xtop", "xbot", "side"))
+        custom = (self.cmb_hook.SelectedItem == HOOK_ITEMS[1])
+        v = {"g": g,
+             "xtop_pos": POS_MODE[self.cmb_xtop_pos.SelectedItem],
+             "xtop_div": int(self.cmb_xtop_div.SelectedItem),
+             "xbot_pos": POS_MODE[self.cmb_xbot_pos.SelectedItem],
+             "xbot_div": int(self.cmb_xbot_div.SelectedItem),
+             "tie": self.cmb_tie.SelectedItem,
+             "sp_mid": ui.num(self.tb_sp_mid.Text, 0.20) * 1000.0,
+             "sp_end": ui.num(self.tb_sp_end.Text, 0.10) * 1000.0,
+             "end_len": ui.num(self.tb_end_len.Text, 0.80) * 1000.0,
+             "hook_mult": ui.num(self.tb_hook.Text, rb.HOOK90_EXT_D) if custom
+             else rb.HOOK90_EXT_D,
+             "max_len": ui.num(self.tb_maxlen.Text, 10.0) * 1000.0,
+             "lap_d": ui.num(self.tb_lap.Text, rb.LAP_D),
+             "cover": ui.num(self.tb_cover.Text, 0.025) * 1000.0}
+        return fpv.beam_preview(self.preview_ext, build_spec(v), self.n_sel)
 
     def _grp(self, nm):
         return (int(getattr(self, "cmb_%s_n" % nm).SelectedItem),
@@ -190,6 +215,18 @@ def build_spec(v):
     }
 
 
+def preview_extents(bm):
+    """(L,b,h) มม. ของคานสำหรับ preview หรือ None (คานโค้ง/อ่านไม่ได้)"""
+    try:
+        f = beam_frame(bm)
+        if f is None:
+            return None
+        s0, s1, u0, u1, v0, v1 = f[4:10]
+        return (s1 - s0, u1 - u0, v1 - v0)
+    except Exception:
+        return None
+
+
 # ---------------------------------------------------------------- main
 try:
     _OVR = CONFIG_OVERRIDE      # Propagate Rebar: รันโดยไม่เปิดฟอร์ม
@@ -202,7 +239,7 @@ if _OVR is None:
              if is_beam(b)]
     if not beams:
         ui.need_selection(u"คาน", u"(คลิกคานที่ต้องการ แล้วกดปุ่มใหม่ — เลือกได้หลายตัว)")
-    form = BeamForm(len(beams), types)
+    form = BeamForm(len(beams), types, preview_extents(beams[0]))
     v = form.show()
     if not v:
         script.exit()

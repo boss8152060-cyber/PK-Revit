@@ -28,6 +28,7 @@ import stair_calc as sc  # noqa: E402
 from revotech import rebar as rb  # noqa: E402
 from revotech import hostconfig  # noqa: E402
 from revotech import ui  # noqa: E402
+from revotech import formpreview as fpv  # noqa: E402
 from revotech.rvt import ename, id_value, selected, type_name, param_mm  # noqa: E402
 from revotech.units import mm_to_ft, ft_to_mm  # noqa: E402
 
@@ -203,13 +204,17 @@ def stairs_from_selection():
 class StairForm(ui.RevoWindow):
     KEYS = sc.GROUP_ORDER
 
-    def __init__(self, info_text, bar_types, runs_for_gate, tw0, tl0):
+    def __init__(self, info_text, bar_types, runs_for_gate, tw0, tl0,
+                 preview_run=None, n_sel=1, preview_note=None):
         body = os.path.join(os.path.dirname(__file__), "body.xaml")
         ui.RevoWindow.__init__(
             self, body, u"REBAR ", u"บันได",
             u"ใส่เหล็กเสริมบันไดหล่อในที่ 1–2 ช่วง แยก 4 กลุ่มสี — PK Revit",
-            u"สร้างเหล็กบันได", max_height=680)
+            u"สร้างเหล็กบันได", max_height=680, preview=True)
         self.bar_types = bar_types
+        self.preview_run = preview_run     # {geo, W} ของช่วงแรกของบันไดแรก หรือ None
+        self.n_sel = n_sel
+        self.preview_note = preview_note
         self.runs_for_gate = runs_for_gate
         self.tb_info.Text = info_text
         names = rb.names_in_project(bar_types) or rb.BAR_NAMES
@@ -231,9 +236,22 @@ class StairForm(ui.RevoWindow):
                    self.tb_ext_len, self.tb_ext_run):
             tb.TextChanged += self._changed
         self._check()
+        fpv.bind(self, self._scene,
+                 lambda: fpv.stair_preview(sc, self.preview_run, self._empty_v(), self.n_sel,
+                                           self.preview_note))
 
     def _changed(self, sender, args):
         self._check()
+
+    def _empty_v(self):
+        g = dict((k, {"on": False, "size": None, "sp": 0}) for k in self.KEYS)
+        return {"groups": g, "cover": 0, "tw": 0, "tl": 0, "anchor": 0, "ext_len": 0,
+                "ext_run": 0, "ext_lower": False}
+
+    def _scene(self):
+        """ภาพประมาณช่วงแรก — ใช้ stair_calc.plan_run ตัวเดียวกับที่สร้างจริง (ไม่แสดงชาน)"""
+        return fpv.stair_preview(sc, self.preview_run, self._read(), self.n_sel,
+                                 self.preview_note)
 
     def _read(self):
         g = {}
@@ -330,7 +348,13 @@ text = u"บันไดที่เลือก: {} ตัว (ใช้ได�
 if n_bad:
     text += u" · ข้าม {} ตัว (ดูเหตุผลใน log)".format(n_bad)
 if _OVR is None:
-    form = StairForm(text, types, gate_runs, tw0, tl0)
+    _pr, _pn = None, None
+    if ok_infos:
+        _r0 = ok_infos[0]["runs"][0]
+        _pr = {"geo": _r0["geo"], "W": _r0["W"]}
+        if len(ok_infos[0]["runs"]) > 1 or ok_infos[0]["lands"]:
+            _pn = u"แสดงเฉพาะช่วงที่ 1 (ไม่แสดงชาน/ช่วงอื่น)"
+    form = StairForm(text, types, gate_runs, tw0, tl0, _pr, len(infos), _pn)
     v = form.show()
     if not v:
         script.exit()
