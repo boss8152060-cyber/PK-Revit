@@ -93,23 +93,23 @@ class ColumnForm(ui.RevoWindow):
         self.bar_types = bar_types
         self.tb_info.Text = u"เสาที่เลือก: {} ต้น".format(n_sel)
         ui.combo_fill(self.cmb_n, [4, 6, 8, 10, 12, 14, 16], 4)
-        have = [n for n in rb.MAIN_BAR_NAMES if n in bar_types]
+        have = rb.names_in_project(bar_types)
         ui.combo_fill(self.cmb_main, have or rb.MAIN_BAR_NAMES, u"DB16"
                       if u"DB16" in have else None)
-        have_t = [n for n in rb.TIE_BAR_NAMES if n in bar_types]
+        have_t = rb.names_in_project(bar_types)
         ui.combo_fill(self.cmb_tie, have_t or rb.TIE_BAR_NAMES, u"RB9"
                       if u"RB9" in have_t else None)
         self._check()
 
     def _check(self):
-        missing = [n for n in rb.BAR_NAMES if n not in self.bar_types]
+        missing = [] if self.bar_types else [u"(ไม่มี Bar Type เลย)"]
         if missing:
             self.tb_check.Text = (u"✗ ไม่พบ Rebar Bar Type ในโปรเจกต์: {} — "
                                   u"สร้าง/โหลดใน Structure > Reinforcement "
                                   u"Settings ก่อน (ขนาดที่ไม่ได้ใช้ไม่เป็นไร)"
                                   .format(u", ".join(missing)))
         else:
-            self.tb_check.Text = u"✓ พบ Rebar Bar Type ครบทุกขนาด"
+            self.tb_check.Text = u"✓ พบ Rebar Bar Type {} ชนิดในโปรเจกต์".format(len(self.bar_types))
 
     def collect(self):
         main = self.cmb_main.SelectedItem

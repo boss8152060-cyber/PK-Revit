@@ -110,7 +110,7 @@ class BeamForm(ui.RevoWindow):
             u"สร้างเหล็กคาน", max_height=600)
         self.bar_types = bar_types
         self.tb_info.Text = u"คานที่เลือก: {} ตัว".format(n_sel)
-        have = [n for n in rb.MAIN_BAR_NAMES if n in bar_types] or rb.MAIN_BAR_NAMES
+        have = rb.names_in_project(bar_types) or rb.MAIN_BAR_NAMES
         sel = u"DB16" if u"DB16" in have else None
         counts = list(range(0, 11))
         for nm, dflt in (("top1", 3), ("top2", 0), ("bot1", 3), ("bot2", 0),
@@ -120,16 +120,16 @@ class BeamForm(ui.RevoWindow):
         for nm, pos in (("xtop", POS_ITEMS[0]), ("xbot", POS_ITEMS[1])):
             ui.combo_fill(getattr(self, "cmb_%s_pos" % nm), POS_ITEMS, pos)
             ui.combo_fill(getattr(self, "cmb_%s_div" % nm), [3, 4, 5, 6], 4)
-        have_t = [n for n in rb.TIE_BAR_NAMES if n in bar_types] or rb.TIE_BAR_NAMES
+        have_t = rb.names_in_project(bar_types) or rb.TIE_BAR_NAMES
         ui.combo_fill(self.cmb_tie, have_t, u"RB9" if u"RB9" in have_t else None)
         ui.combo_fill(self.cmb_hook, HOOK_ITEMS, HOOK_ITEMS[0])
         self.tb_hook.Text = u"12"
-        missing = [n for n in rb.BAR_NAMES if n not in bar_types]
+        missing = [] if bar_types else [u"(ไม่มี Bar Type เลย)"]
         if missing:
             self.tb_check.Text = (u"✗ ไม่พบ Rebar Bar Type ในโปรเจกต์: {} — ขนาดที่ไม่ได้ใช้ไม่เป็นไร"
                                   .format(u", ".join(missing)))
         else:
-            self.tb_check.Text = u"✓ พบ Rebar Bar Type ครบทุกขนาด"
+            self.tb_check.Text = u"✓ พบ Rebar Bar Type {} ชนิดในโปรเจกต์".format(len(bar_types))
 
     def _grp(self, nm):
         return (int(getattr(self, "cmb_%s_n" % nm).SelectedItem),

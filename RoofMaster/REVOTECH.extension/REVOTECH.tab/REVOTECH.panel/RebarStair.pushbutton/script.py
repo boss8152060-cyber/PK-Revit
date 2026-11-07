@@ -211,7 +211,7 @@ class StairForm(ui.RevoWindow):
         self.bar_types = bar_types
         self.runs_for_gate = runs_for_gate
         self.tb_info.Text = info_text
-        names = [n for n in rb.BAR_NAMES if n in bar_types] or rb.BAR_NAMES
+        names = rb.names_in_project(bar_types) or rb.BAR_NAMES
         items = [sc.PLACEHOLDER] + names
         self.cb = {"waist": self.cb_waist, "ext": self.cb_ext,
                    "tread": self.cb_tread, "crack": self.cb_crack}

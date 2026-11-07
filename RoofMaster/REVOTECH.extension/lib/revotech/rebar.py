@@ -47,6 +47,12 @@ def bar_types(doc):
     return d
 
 
+def names_in_project(types_dict):
+    """ชื่อ Rebar Bar Type ทั้งหมดที่มีในโปรเจกต์ เรียงตามขนาด (ตัวเลขในชื่อ) แล้วตามชื่อ
+    — ให้ dropdown แสดงของจริงในโปรเจกต์ ไม่จำกัดที่ชื่อ DB/RB ตายตัว"""
+    return sorted(types_dict.keys(), key=lambda n: (bar_dia_mm(n), n))
+
+
 def hook_type(doc, angle_deg, ext_mult):
     """หา/สร้าง RebarHookType มุม angle_deg (ปลายเหยียด = ext_mult × d)
     คืน (hook, สร้างใหม่ไหม)"""

@@ -173,7 +173,7 @@ class SlabForm(ui.RevoWindow):
             info += u" · อ่านรูปทรงไม่ได้/เอียง {} (จะข้าม)".format(n_bad)
         self.tb_info.Text = info
 
-        have = [n for n in rb.BAR_NAMES if n in bar_types]
+        have = rb.names_in_project(bar_types)
         items = [sc.PLACEHOLDER] + (have or rb.BAR_NAMES)
         self.cmbs = {"TX": self.cmb_tx, "TY": self.cmb_ty,
                      "BX": self.cmb_bx, "BY": self.cmb_by}

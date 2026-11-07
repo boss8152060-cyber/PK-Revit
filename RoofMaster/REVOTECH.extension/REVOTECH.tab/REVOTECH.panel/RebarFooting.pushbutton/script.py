@@ -122,8 +122,8 @@ class FootingForm(ui.RevoWindow):
         self.sp_rect.Visibility = vis.Visible if self.has_rect else vis.Collapsed
         self.sp_tri.Visibility = vis.Visible if self.has_tri else vis.Collapsed
 
-        have_main = [n for n in rb.MAIN_BAR_NAMES if n in bar_types]
-        have_ring = [n for n in rb.TIE_BAR_NAMES if n in bar_types]
+        have_main = rb.names_in_project(bar_types)
+        have_ring = rb.names_in_project(bar_types)
         # ไม่มีค่าตั้งต้น: ต้องเลือกเอง ไม่งั้นด่านตรวจขึ้น ✗
         main_items = [fc.PLACEHOLDER] + (have_main or rb.MAIN_BAR_NAMES)
         ring_items = [fc.PLACEHOLDER] + (have_ring or rb.TIE_BAR_NAMES)
