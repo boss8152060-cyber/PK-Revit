@@ -3,15 +3,15 @@
 สถานะ: โครงสร้างพร้อม unit test (18 เทสต์ผ่านนอก Revit) — **ยังไม่ได้ทดสอบใน Revit** (ปุ่ม License และฟอร์ม WPF ยังไม่เคยรันจริง)
 ยังไม่เชื่อมกับโมดูลเดิมใดๆ → ไม่มีโมดูลถูกบล็อก
 
-ไฟล์: `lib/revotech/i18n.py`, `lib/revotech/license.py`, `REVOTECH.panel/License.pushbutton/` (มี `test_license_i18n.py`)
-รันเทสต์: `python REVOTECH.panel/License.pushbutton/test_license_i18n.py`
+ไฟล์: `lib/revotech/i18n.py`, `lib/revotech/license.py`, `PK Revit.panel/License.pushbutton/` (มี `test_license_i18n.py`)
+รันเทสต์: `python PK Revit.panel/License.pushbutton/test_license_i18n.py`
 
 ## 1) i18n
 
 - `from revotech.i18n import t` → `t("ui.close")`, `t("ui.select_first", what=u"เสา", hint=u"")`
 - พจนานุกรม `STRINGS = {key: {"th":..., "en":..., "lo":...}}` ในไฟล์เดียว; ไทยเป็นต้นฉบับ
 - fallback: ภาษาปัจจุบัน → อังกฤษ → ไทย → ตัวคีย์ (ไม่ error)
-- ภาษาที่เลือกเก็บที่ `%LOCALAPPDATA%\REVOTECH\settings.json` คีย์ `language` (ค่าเริ่มต้น `th`; env `REVOTECH_HOME` ใช้ย้ายโฟลเดอร์ ไว้เทสต์)
+- ภาษาที่เลือกเก็บที่ `%LOCALAPPDATA%\PKRevit\settings.json` คีย์ `language` (ค่าเริ่มต้น `th`; env `PKREVIT_HOME` ใช้ย้ายโฟลเดอร์ ไว้เทสต์)
 - ตัวอย่างข้อความของ `ui.py` ใส่ไว้แล้ว (`ui.close`, `ui.details`, `ui.select_first`, `ui.summary.*` ฯลฯ) แต่ **ยังไม่ได้แก้ `ui.py` ให้เรียก `t()`** ตามข้อกำหนดห้ามแก้ไฟล์เดิม
 - ฟอร์ม XAML ของโมดูลเดิมมีข้อความไทยฝังใน `body.xaml` — ต้องย้ายเป็น `x:Name` + กำหนด `.Text = t(...)` จากโค้ด (ตามแบบ License.pushbutton) ทีละโมดูล
 - ภาษาเปลี่ยนแล้วมีผลเต็มที่เมื่อเปิดหน้าต่างถัดไป (ปุ่ม/tooltip ใน ribbon อ่านจาก `bundle.yaml` ซึ่ง pyRevit โหลดตอนเริ่ม ไม่สลับตามภาษา — ต้องตัดสินใจ ดูคำถามข้อ 6)
@@ -24,13 +24,13 @@
 ### การออกแบบ
 ```
 ผู้ใช้ป้อนรหัส ─▶ activate(key) ─▶ validator.validate(key, machine_id) ─▶ Result(ok, reason, detail)
-                                       │ ok → บันทึก %LOCALAPPDATA%\REVOTECH\license.json
+                                       │ ok → บันทึก %LOCALAPPDATA%\PKRevit\license.json
 ```
 - `machine_id()` = SHA-256 ของ (ชื่อเครื่อง, MAC ถ้าไม่สุ่ม, CPU id, domain) ตัดเหลือ 20 ตัว — ไม่เก็บค่าดิบ
 - รูปแบบรหัส `XXXXX-XXXXX-XXXXX-XXXXX` (ตรวจรูปแบบเท่านั้น ไม่ได้ตรวจความถูกต้อง)
 - จำกัด 2 เครื่อง: ฟังก์ชันล้วน `check_activation(machines, mid, limit=2)` (ย้ายไปใช้ฝั่ง server ได้)
 - Validators: `DevValidator` (เปิดทุกอย่าง), `NoServerValidator` (ค่าเริ่มต้น → ตอบไม่ผ่านเหตุผล `no_server`), `InMemoryValidator` (ต้นแบบ/เทสต์)
-- **โหมด dev**: ตั้ง env `REVOTECH_LICENSE_MODE=dev` → `is_licensed()` เป็นจริงเสมอ
+- **โหมด dev**: ตั้ง env `PKREVIT_LICENSE_MODE=dev` → `is_licensed()` เป็นจริงเสมอ
 - ไม่มีคีย์/ความลับ/URL ฝังในโค้ด
 
 ### ข้อจำกัดที่ต้องรู้
@@ -48,7 +48,7 @@
        forms.alert(u"ยังไม่ได้เปิดสิทธิ์ — กดปุ่ม สิทธิ์การใช้งาน", exitscript=True)
    ```
    หรือใส่ที่เดียวใน `ui.RevoWindow.__init__`/`need_*` เพื่อไม่ต้องแก้ทุกโมดูล (ต้องแก้ `ui.py` — ต้องได้รับอนุญาต)
-3. ระหว่างพัฒนาใช้ `REVOTECH_LICENSE_MODE=dev` (ตั้งเป็น user env var แล้วรีสตาร์ท Revit)
+3. ระหว่างพัฒนาใช้ `PKREVIT_LICENSE_MODE=dev` (ตั้งเป็น user env var แล้วรีสตาร์ท Revit)
 4. เพิ่มเทสต์ว่าโมดูลที่ถูกเชื่อมยังรันได้ในโหมด dev
 
 ## 3) คำถามที่ต้องให้ boss ตัดสินใจ

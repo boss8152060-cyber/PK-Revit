@@ -4,8 +4,9 @@
 
 | เวอร์ชัน | สิ่งที่เปลี่ยน | ทดสอบ |
 |---|---|---|
+| 0.8.0 | เปลี่ยนชื่อเป็น **PK Revit** (แท็บ/แผง/ชื่อหน้าต่าง/โฟลเดอร์ `src/PKRevit.extension`), ธีมใหม่ขาว-ดำแบบ PK (ไม่มีส้ม) พร้อมโลโก้ PK, ไอคอนปุ่มทุกตัว (ปกติ+dark), ตัวมาร์ก Comments เปลี่ยนเป็น `PKRevit:` และโฟลเดอร์ log เป็น `%LOCALAPPDATA%\PKRevit` | syntax + unit test + render XAML ด้วย WPF จริง |
 | 0.7.2 | โมดูลเหล็กทั้ง 5: dropdown ดึง Rebar Bar Type ทุกชนิดจากโปรเจกต์ เรียงตามขนาด | syntax + unit test |
-| 0.7.1 | Roof Master: dropdown ดึง "Family : Type" จริง จำค่าที่เลือกล่าสุด (`%LOCALAPPDATA%\REVOTECH\roofmaster_last.json`) | syntax |
+| 0.7.1 | Roof Master: dropdown ดึง "Family : Type" จริง จำค่าที่เลือกล่าสุด (`%LOCALAPPDATA%\PKRevit\roofmaster_last.json`) | syntax |
 | 0.7.0 | Dang Gen (ขั้นที่ 5 ของ Roof Master), QTO Tables, License + i18n (TH/EN/LO) เบื้องต้น | syntax + unit test |
 | 0.6.0 | บาร์คัท/BBS: ตารางตัด, แผนตัดท่อน 10/12 ม., ส่งออก Excel/CSV, ชีต Revit | syntax + unit test |
 | 0.5.0 | Rebar พื้น (เหล็กเส้น/ไวร์เมช), Rebar บันได | syntax + unit test |

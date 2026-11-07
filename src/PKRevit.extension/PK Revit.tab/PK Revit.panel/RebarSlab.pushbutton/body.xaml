@@ -1,0 +1,79 @@
+<TextBlock x:Name="tb_info" FontSize="12" TextWrapping="Wrap"
+           Foreground="{StaticResource TxtDim}"/>
+<CheckBox x:Name="cb_same" Content="ใส่ให้พื้นชื่อ type เดียวกันทั้งอาคาร" IsChecked="False"/>
+<CheckBox x:Name="cb_replace" Content="แทนที่เหล็ก PK Revit เดิมของพื้นเหล่านี้" IsChecked="True"/>
+
+<TextBlock Text="โหมด" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<StackPanel Orientation="Horizontal">
+    <RadioButton x:Name="rb_bar" GroupName="mode" Content="เหล็กเส้น" IsChecked="True"
+                 Foreground="{StaticResource TxtMain}" Margin="0,0,24,0"/>
+    <RadioButton x:Name="rb_mesh" GroupName="mode" Content="ไวร์เมช"
+                 Foreground="{StaticResource TxtMain}"/>
+</StackPanel>
+
+<StackPanel x:Name="sp_bar">
+    <TextBlock Text="ชั้นเหล็ก  ขนาด / ระยะ (ม.)" FontSize="11.5" Foreground="{StaticResource Accent}"
+               FontWeight="SemiBold" Margin="0,14,0,6"/>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="110"/><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" Text="ชั้นบน ทิศ X" VerticalAlignment="Center"/>
+        <ComboBox x:Name="cmb_tx" Grid.Row="0" Grid.Column="1" Height="26" Margin="0,0,6,6"/>
+        <TextBox x:Name="tb_tx" Grid.Row="0" Grid.Column="2" Text="0.15" Margin="0,0,0,6"/>
+        <TextBlock Grid.Row="1" Text="ชั้นบน ทิศ Y" VerticalAlignment="Center"/>
+        <ComboBox x:Name="cmb_ty" Grid.Row="1" Grid.Column="1" Height="26" Margin="0,0,6,6"/>
+        <TextBox x:Name="tb_ty" Grid.Row="1" Grid.Column="2" Text="0.15" Margin="0,0,0,6"/>
+        <TextBlock Grid.Row="2" Text="ชั้นล่าง ทิศ X" VerticalAlignment="Center"/>
+        <ComboBox x:Name="cmb_bx" Grid.Row="2" Grid.Column="1" Height="26" Margin="0,0,6,6"/>
+        <TextBox x:Name="tb_bx" Grid.Row="2" Grid.Column="2" Text="0.15" Margin="0,0,0,6"/>
+        <TextBlock Grid.Row="3" Text="ชั้นล่าง ทิศ Y" VerticalAlignment="Center"/>
+        <ComboBox x:Name="cmb_by" Grid.Row="3" Grid.Column="1" Height="26" Margin="0,0,6,0"/>
+        <TextBox x:Name="tb_by" Grid.Row="3" Grid.Column="2" Text="0.15"/>
+    </Grid>
+    <TextBlock Text="ทิศ X/Y = ตามแกน X/Y ของโมเดล; ทิศ X อยู่ริมนอกสุดของแต่ละด้าน — ตีความเอง รอยืนยัน"
+               FontSize="10" Foreground="{StaticResource TxtDim}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+</StackPanel>
+
+<StackPanel x:Name="sp_mesh" Visibility="Collapsed">
+    <TextBlock Text="Fabric Sheet Type" FontSize="11.5" Foreground="{StaticResource Accent}"
+               FontWeight="SemiBold" Margin="0,14,0,6"/>
+    <ComboBox x:Name="cmb_mesh" Height="26"/>
+    <TextBlock Text="สร้างไวร์เมช 1 ผืนต่อพื้น 1 แผ่น ตามขอบนอกของพื้น (ช่องเปิดยังไม่เจาะ)"
+               FontSize="10" Foreground="{StaticResource TxtDim}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+</StackPanel>
+
+<TextBlock Text="เหล็กเสริมริม / หนวดกุ้ง (ไม่บังคับ)" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<CheckBox x:Name="cb_edge" Content="ใส่เหล็กเสริมบนตามขอบพื้น" IsChecked="False"/>
+<Grid Margin="0,4,0,0">
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="110"/><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/>
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <TextBlock Grid.Row="0" Text="ขนาด / ระยะ ม." VerticalAlignment="Center"/>
+    <ComboBox x:Name="cmb_edge" Grid.Row="0" Grid.Column="1" Height="26" Margin="0,0,6,6"/>
+    <TextBox x:Name="tb_edge_sp" Grid.Row="0" Grid.Column="2" Text="0.20" Margin="0,0,0,6"/>
+    <TextBlock Grid.Row="1" Text="ยาวเข้าพื้น (ม.)" VerticalAlignment="Center"/>
+    <TextBox x:Name="tb_edge_len" Grid.Row="1" Grid.Column="2" Text="0.80"/>
+</Grid>
+<TextBlock Text="ตีความเอง: เหล็กบนตั้งฉากขอบ ปลายริมงอลง 12d — ความหมายจริงในคลิปรอยืนยัน"
+           FontSize="10" Foreground="{StaticResource TxtDim}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+
+<TextBlock Text="ระยะหุ้มคอนกรีต" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<StackPanel Orientation="Horizontal">
+    <TextBox x:Name="tb_cover" Text="0.02"/>
+    <TextBlock Text="  ม. (ถึงผิวเหล็กนอกสุด)" VerticalAlignment="Center" Foreground="{StaticResource TxtDim}"/>
+</StackPanel>
+
+<TextBlock Text="ด่านตรวจก่อนสร้าง" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<TextBlock x:Name="tb_check" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,4"/>

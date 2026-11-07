@@ -1,10 +1,10 @@
 # PK-Revit
 
-Plugin Revit 2026 (pyRevit) สำหรับโครงหลังคาและเหล็กเสริม ตามคลิปสาธิต REVOTECH
+Plugin Revit 2026 (pyRevit) สำหรับโครงหลังคาและเหล็กเสริม ตามคลิปสาธิต PK Revit
 
 สถานะ: เขียนครบทุกโมดูลตามคลิปแล้ว (เวอร์ชัน 0.7.x) แต่**ยังไม่ผ่านการทดสอบใน Revit** ดู [CHANGELOG.md](CHANGELOG.md)
 
-## โมดูล (แท็บ REVOTECH)
+## โมดูล (แท็บ PK Revit)
 Roof Master (5 ขั้น), Roof Cover, Rebar เสา/คาน/ฐานราก/พื้น/บันได, บาร์คัท/BBS, QTO Tables, License/ภาษา
 
 ## เอกสาร
@@ -16,4 +16,4 @@ Roof Master (5 ขั้น), Roof Cover, Rebar เสา/คาน/ฐานร
 - `docs/accept-*.md` — เกณฑ์ตรวจรับรายโมดูล
 
 ## ติดตั้ง
-คัดลอกโฟลเดอร์ `RoofMaster/REVOTECH.extension` ไปไว้ใน `%APPDATA%\pyRevit\Extensions\` แล้ว pyRevit > Reload
+คัดลอกโฟลเดอร์ `src/PKRevit.extension` ไปไว้ใน `%APPDATA%\pyRevit\Extensions\` แล้ว pyRevit > Reload

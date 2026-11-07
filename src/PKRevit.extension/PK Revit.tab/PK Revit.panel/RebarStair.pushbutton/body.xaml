@@ -1,0 +1,71 @@
+<TextBlock x:Name="tb_info" FontSize="12" TextWrapping="Wrap"
+           Foreground="{StaticResource TxtDim}"/>
+<CheckBox x:Name="cb_same" Content="ใส่ให้บันไดชื่อ type เดียวกันทั้งอาคาร" IsChecked="False"/>
+<CheckBox x:Name="cb_replace" Content="แทนที่เหล็ก PK Revit เดิมของบันไดเหล่านี้" IsChecked="True"/>
+<CheckBox x:Name="cb_view" Content="สร้าง/อัปเดต 3D view แยกสี &quot;PK Revit 3D เหล็กบันได&quot;" IsChecked="True"/>
+
+<TextBlock Text="กลุ่มเหล็ก  (● สีใน 3D view)  ขนาด / @ระยะ (ม.)" FontSize="11.5"
+           Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,14,0,6"/>
+<Grid>
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/><ColumnDefinition Width="90"/><ColumnDefinition Width="70"/>
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <CheckBox x:Name="cb_waist" Grid.Row="0" IsChecked="True" Margin="0,0,0,6">
+        <TextBlock><Run Text="● " Foreground="#DC322F"/><Run Text="เหล็กหลักท้องบันได"/></TextBlock>
+    </CheckBox>
+    <ComboBox x:Name="cmb_waist" Grid.Row="0" Grid.Column="1" Height="26" Margin="0,0,6,6"/>
+    <TextBox x:Name="tb_waist_sp" Grid.Row="0" Grid.Column="2" Text="0.15" Margin="0,0,0,6"/>
+    <CheckBox x:Name="cb_ext" Grid.Row="1" IsChecked="True" Margin="0,0,0,6">
+        <TextBlock><Run Text="● " Foreground="#266EE6"/><Run Text="เหล็กต่อ/ยืดที่ชานและคาน"/></TextBlock>
+    </CheckBox>
+    <ComboBox x:Name="cmb_ext" Grid.Row="1" Grid.Column="1" Height="26" Margin="0,0,6,6"/>
+    <TextBox x:Name="tb_ext_sp" Grid.Row="1" Grid.Column="2" Text="0.2" Margin="0,0,0,6"/>
+    <CheckBox x:Name="cb_tread" Grid.Row="2" IsChecked="True" Margin="0,0,0,6">
+        <TextBlock><Run Text="● " Foreground="#23A555"/><Run Text="เหล็กลูกนอน-ลูกตั้ง"/></TextBlock>
+    </CheckBox>
+    <ComboBox x:Name="cmb_tread" Grid.Row="2" Grid.Column="1" Height="26" Margin="0,0,6,6"/>
+    <TextBox x:Name="tb_tread_sp" Grid.Row="2" Grid.Column="2" Text="0.2" Margin="0,0,0,6"/>
+    <CheckBox x:Name="cb_crack" Grid.Row="3" IsChecked="True">
+        <TextBlock><Run Text="● " Foreground="#EBAF14"/><Run Text="เหล็กกันร้าว/ตามขวาง"/></TextBlock>
+    </CheckBox>
+    <ComboBox x:Name="cmb_crack" Grid.Row="3" Grid.Column="1" Height="26" Margin="0,0,6,0"/>
+    <TextBox x:Name="tb_crack_sp" Grid.Row="3" Grid.Column="2" Text="0.2"/>
+</Grid>
+<TextBlock Text="ชื่อกลุ่มตั้งตามหน้าที่ทางวิศวกรรม (ชื่อในคลิปบางอันอ่านไม่ชัด — รอยืนยัน) · ชานใช้ขนาด/ระยะของ “หลัก” และ “กันร้าว”"
+           FontSize="10" Foreground="{StaticResource TxtDim}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+
+<TextBlock Text="ขนาดหน้าตัดและระยะ" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<Grid>
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="230"/><ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <TextBlock Grid.Row="0" Text="ระยะหุ้ม (ม.)" VerticalAlignment="Center"/>
+    <TextBox x:Name="tb_cover" Grid.Row="0" Grid.Column="1" Text="0.025" HorizontalAlignment="Left" Margin="0,0,0,6"/>
+    <TextBlock Grid.Row="1" Text="ความหนาท้องบันได ตั้งฉากความลาด (ม.)" VerticalAlignment="Center" TextWrapping="Wrap"/>
+    <TextBox x:Name="tb_tw" Grid.Row="1" Grid.Column="1" Text="0.15" HorizontalAlignment="Left" Margin="0,0,0,6"/>
+    <TextBlock Grid.Row="2" Text="ความหนาชาน (ม.)" VerticalAlignment="Center"/>
+    <TextBox x:Name="tb_tl" Grid.Row="2" Grid.Column="1" Text="0.15" HorizontalAlignment="Left" Margin="0,0,0,6"/>
+    <TextBlock Grid.Row="3" Text="เหล็กหลักยื่นเข้าชาน/คาน (ม.)" VerticalAlignment="Center"/>
+    <TextBox x:Name="tb_anchor" Grid.Row="3" Grid.Column="1" Text="0.30" HorizontalAlignment="Left" Margin="0,0,0,6"/>
+    <TextBlock Grid.Row="4" Text="เหล็กต่อ: ยื่นเข้าชาน / ลงมาตามท้อง (ม.)" VerticalAlignment="Center" TextWrapping="Wrap"/>
+    <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,6">
+        <TextBox x:Name="tb_ext_len" Text="0.40"/>
+        <TextBlock Text=" / " VerticalAlignment="Center"/>
+        <TextBox x:Name="tb_ext_run" Text="0.60"/>
+    </StackPanel>
+    <CheckBox x:Name="cb_ext_lower" Grid.Row="5" Grid.ColumnSpan="2" IsChecked="False"
+              Content="เหล็กต่อที่ปลายล่างของช่วงด้วย (ปกติเฉพาะปลายบน)"/>
+</Grid>
+
+<TextBlock Text="ด่านตรวจก่อนสร้าง" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<TextBlock x:Name="tb_check" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,4"/>

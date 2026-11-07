@@ -6,7 +6,7 @@
 ## เตรียม
 - โปรเจกต์ Revit 2026 มีหลังคา และรัน Hip Ridge Gen แล้ว (มี type ชื่อมี `ตะเข้` / `อกไก่`)
 - มี Structural Column type อย่างน้อย 1 ตัว (ควรเป็นท่อเหล็กสี่เหลี่ยม/Square Hollow) — ถ้ามี type ชื่อมี `ดั้ง` จะใช้ตัวนั้น ถ้าไม่มี จะ duplicate เป็น `ดั้ง` ให้
-- ติดตั้ง `REVOTECH.extension` ใหม่ (ต้องมี `engines/DangGen.pushbutton/dang_calc.py` มาด้วย) แล้ว pyRevit > Reload
+- ติดตั้ง `PKRevit.extension` ใหม่ (ต้องมี `engines/DangGen.pushbutton/dang_calc.py` มาด้วย) แล้ว pyRevit > Reload
 - (ถ้าอยากให้ดั้งลงถึงคาน/พื้น) มีคาน Structural Framing หรือพื้นใต้อกไก่ และมี 3D view ที่เห็นของเหล่านั้น
 
 ## ขั้นทดสอบและผลที่คาดหวัง

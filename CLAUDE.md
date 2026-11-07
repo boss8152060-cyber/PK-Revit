@@ -1,4 +1,4 @@
-# PK-Revit (REVOTECH RoofMaster) — กฎและบริบทสำหรับ Claude
+# PK Revit — กฎและบริบทสำหรับ Claude
 
 ไฟล์นี้คือข้อตกลงการทำงานร่วมกัน อ่านก่อนเริ่มงานทุกครั้ง
 
@@ -7,8 +7,8 @@
 ให้ทำงานได้ตามฟีเจอร์ที่เห็นในคลิปสาธิตของทีมเดิม
 
 ## บริบท
-- ผู้ใช้: boss (REVOTECH) ผู้ดูแลโปรเจกต์
-- โค้ดเดิม: `Code/REVOTECH_RoofMaster_v2` (pyRevit extension; engine: Rafter, Purlin, HipRidge, Valley; UI แบบ WPF/XAML) ทำหลังคาได้บางส่วนเท่านั้น
+- ผู้ใช้: boss (PK Revit) ผู้ดูแลโปรเจกต์
+- โค้ดเดิม: `Code/PK Revit_RoofMaster_v2` (pyRevit extension; engine: Rafter, Purlin, HipRidge, Valley; UI แบบ WPF/XAML) ทำหลังคาได้บางส่วนเท่านั้น
 - คลิปอ้างอิง: `Clip/` (~110 ไฟล์ mp4 + ภาพหน้าจอ) เป็นคลิปที่อดีตเพื่อนร่วมทีมเคยทำไว้ตอนยังอยู่ในทีม ผู้ใช้เป็นผู้ถือคลิปเหล่านี้
 - เวอร์ชัน: Revit 2026, pyRevit รุ่นล่าสุดจาก https://github.com/pyrevitlabs/pyRevit/releases
 - Revit 2026 ใช้ .NET 8 — ต้องตรวจว่า pyRevit/IronPython/CPython engine ที่ใช้รองรับ API ของ 2026
