@@ -17,6 +17,7 @@ import traceback
 from pyrevit import revit, DB, forms, script
 
 from revotech import rebar as rb
+from revotech import hostconfig
 from revotech import ui
 from revotech.rvt import ename, id_value, selected, type_name
 from revotech.units import mm_to_ft, ft_to_mm
@@ -133,15 +134,26 @@ class ColumnForm(ui.RevoWindow):
 
 
 # ---------------------------------------------------------------- main
-cols = selected(uidoc, doc, DB.BuiltInCategory.OST_StructuralColumns)
-if not cols:
-    ui.need_selection(u"เสา", u"(คลิกเสาที่ต้องการ แล้วกดปุ่มใหม่ — เลือกได้หลายต้น)")
+try:
+    _OVR = CONFIG_OVERRIDE      # Propagate Rebar: รันโดยไม่เปิดฟอร์ม
+except NameError:
+    _OVR = None
 
 types = rb.bar_types(doc)
-form = ColumnForm(len(cols), types)
-v = form.show()
-if not v:
-    script.exit()
+if _OVR is None:
+    cols = selected(uidoc, doc, DB.BuiltInCategory.OST_StructuralColumns)
+    if not cols:
+        ui.need_selection(u"เสา", u"(คลิกเสาที่ต้องการ แล้วกดปุ่มใหม่ — เลือกได้หลายต้น)")
+    form = ColumnForm(len(cols), types)
+    v = form.show()
+    if not v:
+        script.exit()
+else:
+    cols = hostconfig.hosts_from_override(doc, _OVR)
+    v, _miss = hostconfig.override_values(_OVR, rb.BAR_NAMES, types)
+    _prob = hostconfig.override_problem(cols, _miss)
+    if _prob:
+        forms.alert(_prob, title=u"PK Revit — Rebar เสา", exitscript=True)
 
 # ขยายเป็นเสาชื่อ type เดียวกันทั้งอาคาร (ถ้าติ๊ก)
 if v["same"]:
@@ -252,6 +264,8 @@ try:
             p = r.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
             if p is not None and not p.IsReadOnly:
                 p.Set(MARK)
+        if created:
+            hostconfig.save(col, "column", v)   # จำค่าไว้ที่เสาต้นนี้ (ให้ Propagate)
         log.append(u"{}: เหล็กยืน {} เส้น, ปลอก {} ชุด, ขนาดหน้าตัด {:.0f}x{:.0f} มม. สูง {:.0f} มม."
                    .format(label, v["n"], len(zones), ft_to_mm(w), ft_to_mm(h),
                            ft_to_mm(H)))

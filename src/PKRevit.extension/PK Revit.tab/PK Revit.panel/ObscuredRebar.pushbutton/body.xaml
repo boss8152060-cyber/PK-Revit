@@ -1,0 +1,24 @@
+<TextBlock x:Name="tb_view" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource TxtDim}"/>
+<TextBlock Text="การทำงาน" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<StackPanel Orientation="Horizontal">
+    <RadioButton x:Name="rb_show" GroupName="act" IsChecked="True"
+                 Content="แสดงเหล็กที่ถูกบัง (Show)"
+                 Foreground="{StaticResource TxtMain}" Margin="0,0,24,0"/>
+    <RadioButton x:Name="rb_hide" GroupName="act" Content="กลับเป็นปกติ (Hide)"
+                 Foreground="{StaticResource TxtMain}"/>
+</StackPanel>
+<TextBlock Text="หมวด host" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,0"/>
+<CheckBox x:Name="cb_beam" Content="คาน" IsChecked="True"/>
+<CheckBox x:Name="cb_col" Content="เสา" IsChecked="True"/>
+<CheckBox x:Name="cb_found" Content="ฐานราก" IsChecked="True"/>
+<CheckBox x:Name="cb_floor" Content="พื้น" IsChecked="True"/>
+<CheckBox x:Name="cb_wall" Content="ผนัง" IsChecked="True"/>
+<TextBlock Text="ชนิดเหล็ก" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,0"/>
+<CheckBox x:Name="cb_rebar" Content="Rebar (เหล็กเส้น)" IsChecked="True"/>
+<CheckBox x:Name="cb_area" Content="Area / Path Reinforcement" IsChecked="True"/>
+<CheckBox x:Name="cb_fabric" Content="Fabric Sheet (ไวร์เมช)" IsChecked="True"/>
+<TextBlock x:Name="tb_err" FontSize="11" Foreground="#B00020" TextWrapping="Wrap"
+           Margin="0,10,0,0"/>

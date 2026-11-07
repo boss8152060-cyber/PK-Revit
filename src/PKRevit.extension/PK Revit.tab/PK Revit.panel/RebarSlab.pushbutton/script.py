@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import slab_calc as sc  # noqa: E402
 
 from revotech import rebar as rb  # noqa: E402
+from revotech import hostconfig  # noqa: E402
 from revotech import ui  # noqa: E402
 from revotech.rvt import ename, id_value, selected, type_name  # noqa: E402
 from revotech.units import mm_to_ft, ft_to_mm  # noqa: E402
@@ -235,11 +236,22 @@ class SlabForm(ui.RevoWindow):
 
 
 # ---------------------------------------------------------------- main
-floors = selected(uidoc, doc, DB.BuiltInCategory.OST_Floors)
-if not floors:
-    ui.need_selection(u"พื้น", u"(คลิกพื้นที่ต้องการ แล้วกดปุ่มใหม่ — เลือกได้หลายผืน)")
+try:
+    _OVR = CONFIG_OVERRIDE      # Propagate Rebar: รันโดยไม่เปิดฟอร์ม
+except NameError:
+    _OVR = None
 
 types = rb.bar_types(doc)
+if _OVR is None:
+    floors = selected(uidoc, doc, DB.BuiltInCategory.OST_Floors)
+    if not floors:
+        ui.need_selection(u"พื้น", u"(คลิกพื้นที่ต้องการ แล้วกดปุ่มใหม่ — เลือกได้หลายผืน)")
+else:
+    floors = hostconfig.hosts_from_override(doc, _OVR)
+    v, _miss = hostconfig.override_values(_OVR, rb.BAR_NAMES, types)
+    _prob = hostconfig.override_problem(floors, _miss)
+    if _prob:
+        forms.alert(_prob, title=u"PK Revit — Rebar พื้น", exitscript=True)
 fabrics = _fabric_types()
 
 
@@ -263,10 +275,11 @@ for f in floors:
     shapes[id_value(f.Id)] = _shape_safe(f)
 n_bad = sum(1 for s in shapes.values() if s is None or "error" in s)
 
-form = SlabForm(len(floors), n_bad, types, fabrics)
-v = form.show()
-if not v:
-    script.exit()
+if _OVR is None:
+    form = SlabForm(len(floors), n_bad, types, fabrics)
+    v = form.show()
+    if not v:
+        script.exit()
 
 if v["same"]:
     floors = _expand_same(floors)
@@ -389,6 +402,8 @@ try:
             p = r.get_Parameter(COMMENTS)
             if p is not None and not p.IsReadOnly:
                 p.Set(MARK)
+        if created:
+            hostconfig.save(fl, "slab", v)   # จำค่าไว้ที่พื้นผืนนี้
         n_sets += sets
         n_bars += nb
         done += 1

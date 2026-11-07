@@ -1,0 +1,58 @@
+<StackPanel>
+    <StackPanel.Resources>
+        <Style x:Key="Soft" TargetType="Button">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="{StaticResource Field}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+            <Setter Property="Foreground" Value="{StaticResource TxtMain}"/>
+        </Style>
+    </StackPanel.Resources>
+
+    <TextBlock x:Name="tb_info" FontSize="12" TextWrapping="Wrap"
+               Foreground="{StaticResource TxtDim}"/>
+
+    <TextBlock Text="ขอบเขต" FontSize="11.5" Foreground="{StaticResource Accent}"
+               FontWeight="SemiBold" Margin="0,12,0,6"/>
+    <RadioButton x:Name="rb_hosts" Content="เหล็กของ host ที่เลือก" GroupName="scope"/>
+    <RadioButton x:Name="rb_view" Content="เหล็กที่มองเห็นใน view ปัจจุบัน" IsChecked="True" GroupName="scope"/>
+    <RadioButton x:Name="rb_model" Content="ทั้งโมเดล" GroupName="scope"/>
+    <Button x:Name="btn_pick" Content="เลือก host (ทีละตัว / ตาม Mark)..." Style="{StaticResource Soft}"
+            HorizontalAlignment="Left" Margin="0,8,0,0"/>
+
+    <TextBlock Text="เงื่อนไขตรวจ" FontSize="11.5" Foreground="{StaticResource Accent}"
+               FontWeight="SemiBold" Margin="0,14,0,6"/>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="230"/><ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Text="ระยะห่างขั้นต่ำ (มม.) 0 = เฉพาะที่ชน" VerticalAlignment="Center"/>
+        <TextBox x:Name="tb_clear" Grid.Column="1" Text="0" HorizontalAlignment="Left" Margin="0,0,0,6"/>
+        <TextBlock Grid.Row="1" Text="จำนวนคู่สูงสุดที่ตรวจละเอียด" VerticalAlignment="Center"/>
+        <TextBox x:Name="tb_max" Grid.Row="1" Grid.Column="1" Text="2000" HorizontalAlignment="Left"/>
+    </Grid>
+    <CheckBox x:Name="cb_exact" Content="ตรวจละเอียดคู่ที่ bbox ซ้อน (ไม่ติ๊ก = รายงาน bbox ซ้อนอย่างเดียว)" IsChecked="True"/>
+
+    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+        <Button x:Name="btn_cancel" Content="ยกเลิกการตรวจ" Style="{StaticResource Soft}" IsEnabled="False"/>
+        <Button x:Name="btn_csv" Content="ส่งออก CSV" Style="{StaticResource Soft}" IsEnabled="False"/>
+        <Button x:Name="btn_clear_sel" Content="ล้างการเลือก" Style="{StaticResource Soft}"/>
+    </StackPanel>
+    <TextBlock x:Name="tb_progress" FontSize="11.5" Foreground="{StaticResource TxtDim}"
+               TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+    <TextBlock Text="รายงาน (คลิกแถวเพื่อซูม/เลือกใน view)" FontSize="11.5"
+               Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,12,0,6"/>
+    <Border BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6">
+        <TreeView x:Name="tree" Height="250" BorderThickness="0" FontSize="12"
+                  Background="{StaticResource Field}"/>
+    </Border>
+    <TextBlock x:Name="tb_note" FontSize="10.5" Foreground="{StaticResource TxtDim}"
+               TextWrapping="Wrap" Margin="0,6,0,0"/>
+</StackPanel>

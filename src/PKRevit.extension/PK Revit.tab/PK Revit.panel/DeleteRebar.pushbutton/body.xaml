@@ -1,0 +1,15 @@
+<TextBlock x:Name="tb_info" FontSize="12.5" TextWrapping="Wrap" Foreground="{StaticResource TxtMain}"/>
+<TextBlock Text="ลบอะไร" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<RadioButton x:Name="rb_pk" GroupName="scope" IsChecked="True"
+             Foreground="{StaticResource TxtMain}" Margin="0,0,0,4"/>
+<TextBlock x:Name="tb_pk" FontSize="11" Foreground="{StaticResource TxtDim}"
+           TextWrapping="Wrap" Margin="24,0,0,8"/>
+<RadioButton x:Name="rb_all" GroupName="scope"
+             Foreground="{StaticResource TxtMain}" Margin="0,0,0,4"/>
+<TextBlock x:Name="tb_all" FontSize="11" Foreground="{StaticResource TxtDim}"
+           TextWrapping="Wrap" Margin="24,0,0,8"/>
+<TextBlock x:Name="tb_warn" FontSize="11" Foreground="#B00020" TextWrapping="Wrap"
+           Margin="0,6,0,0"/>
+<TextBlock Text="Ctrl+Z ครั้งเดียวย้อนการลบทั้งชุดได้" FontSize="10.5"
+           Foreground="{StaticResource TxtDim}" Margin="0,8,0,0"/>

@@ -1,0 +1,6 @@
+title: Delete Rebar
+tooltip: >-
+  ลบเหล็กบน host ที่เลือก — มีกล่องยืนยันบอกจำนวนแยกตามชนิดก่อนลบ ค่าตั้งต้นลบเฉพาะที่ PK Revit สร้าง
+  (Comments ขึ้นต้น PKRevit:) หรือเลือกลบทั้งหมดทุกที่มา; Transaction เดียว Ctrl+Z ย้อนได้ทั้งชุด
+  เตือนเมื่อต้องลบทั้งระบบ Area/Path Reinforcement
+author: PK Revit

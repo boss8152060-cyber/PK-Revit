@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import footing_calc as fc  # noqa: E402
 
 from revotech import rebar as rb  # noqa: E402
+from revotech import hostconfig  # noqa: E402
 from revotech import ui  # noqa: E402
 from revotech.rvt import ename, id_value, selected, type_name  # noqa: E402
 from revotech.units import mm_to_ft, ft_to_mm  # noqa: E402
@@ -188,11 +189,22 @@ class FootingForm(ui.RevoWindow):
 
 
 # ---------------------------------------------------------------- main
-foots = selected(uidoc, doc, DB.BuiltInCategory.OST_StructuralFoundation)
-if not foots:
-    ui.need_selection(u"ฐานราก", u"(คลิกฐานรากที่ต้องการ แล้วกดปุ่มใหม่ — เลือกได้หลายฐาน)")
+try:
+    _OVR = CONFIG_OVERRIDE      # Propagate Rebar: รันโดยไม่เปิดฟอร์ม
+except NameError:
+    _OVR = None
 
 types = rb.bar_types(doc)
+if _OVR is None:
+    foots = selected(uidoc, doc, DB.BuiltInCategory.OST_StructuralFoundation)
+    if not foots:
+        ui.need_selection(u"ฐานราก", u"(คลิกฐานรากที่ต้องการ แล้วกดปุ่มใหม่ — เลือกได้หลายฐาน)")
+else:
+    foots = hostconfig.hosts_from_override(doc, _OVR)
+    v, _miss = hostconfig.override_values(_OVR, rb.BAR_NAMES, types)
+    _prob = hostconfig.override_problem(foots, _miss)
+    if _prob:
+        forms.alert(_prob, title=u"PK Revit — Rebar ฐานราก", exitscript=True)
 
 
 def _expand_same(cur):
@@ -227,10 +239,11 @@ def _count(fl):
 
 
 nr, nt, no = _count(foots)
-form = FootingForm(len(foots), nr, nt, no, types)
-v = form.show()
-if not v:
-    script.exit()
+if _OVR is None:
+    form = FootingForm(len(foots), nr, nt, no, types)
+    v = form.show()
+    if not v:
+        script.exit()
 
 if v["same"]:
     foots = _expand_same(foots)
@@ -343,6 +356,8 @@ try:
             p = r.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
             if p is not None and not p.IsReadOnly:
                 p.Set(MARK)
+        if created:
+            hostconfig.save(ft, "footing", v)   # จำค่าไว้ที่ฐานรากตัวนี้
         made_mat += n_mat
         made_ring += n_ring
         done += 1

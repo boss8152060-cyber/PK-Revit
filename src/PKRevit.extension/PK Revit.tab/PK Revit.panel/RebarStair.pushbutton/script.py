@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import stair_calc as sc  # noqa: E402
 
 from revotech import rebar as rb  # noqa: E402
+from revotech import hostconfig  # noqa: E402
 from revotech import ui  # noqa: E402
 from revotech.rvt import ename, id_value, selected, type_name, param_mm  # noqa: E402
 from revotech.units import mm_to_ft, ft_to_mm  # noqa: E402
@@ -267,11 +268,22 @@ class StairForm(ui.RevoWindow):
 
 
 # ---------------------------------------------------------------- main
-sel = stairs_from_selection()
-if not sel:
-    ui.need_selection(u"บันได", u"(คลิกบันไดหล่อในที่ แล้วกดปุ่มใหม่ — เลือกได้หลายตัว)")
+try:
+    _OVR = CONFIG_OVERRIDE      # Propagate Rebar: รันโดยไม่เปิดฟอร์ม
+except NameError:
+    _OVR = None
 
 types = rb.bar_types(doc)
+if _OVR is None:
+    sel = stairs_from_selection()
+    if not sel:
+        ui.need_selection(u"บันได", u"(คลิกบันไดหล่อในที่ แล้วกดปุ่มใหม่ — เลือกได้หลายตัว)")
+else:
+    sel = hostconfig.hosts_from_override(doc, _OVR)
+    v, _miss = hostconfig.override_values(_OVR, rb.BAR_NAMES, types)
+    _prob = hostconfig.override_problem(sel, _miss)
+    if _prob:
+        forms.alert(_prob, title=u"PK Revit — Rebar บันได", exitscript=True)
 
 
 def _expand_same(cur):
@@ -317,10 +329,11 @@ text = u"บันไดที่เลือก: {} ตัว (ใช้ได�
     len(infos), len(ok_infos), len(gate_runs), sum(len(i["lands"]) for i in ok_infos))
 if n_bad:
     text += u" · ข้าม {} ตัว (ดูเหตุผลใน log)".format(n_bad)
-form = StairForm(text, types, gate_runs, tw0, tl0)
-v = form.show()
-if not v:
-    script.exit()
+if _OVR is None:
+    form = StairForm(text, types, gate_runs, tw0, tl0)
+    v = form.show()
+    if not v:
+        script.exit()
 
 if v["same"]:
     have = set(i["sid"] for i in infos)
@@ -443,6 +456,7 @@ try:
             log.append(u"{}: {} ชุด".format(l["label"], len(sets)))
         if st_sets:
             done_stairs += 1
+            hostconfig.save(st, "stair", v)   # จำค่าไว้ที่บันไดตัวนี้
 
     # 3D view แยกสี (ปรับเฉพาะ view ชื่อนี้ที่เราสร้าง)
     if v["view"] and created:

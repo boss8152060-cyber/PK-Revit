@@ -1,0 +1,7 @@
+title: Color by Parameter
+tooltip: >-
+  ระบายสีใน view ตามค่าพารามิเตอร์ — โหมดเหล็ก (Partition, Bar Type, Shape, Mark, Comments)
+  หรือชิ้นงานโครงสร้าง (Mark, Type Mark, Family, Type Name, Comments) สแกนค่าที่ไม่ซ้ำ
+  กำหนดสีอัตโนมัติ (ไล่เฉด/คอนทราสต์สูง) เปลี่ยนสีเองได้ ใช้ได้หลาย view จำสีล่าสุด
+  ปุ่ม Reset คืนสีเฉพาะ element ที่เครื่องมือเคยระบายไว้
+author: PK Revit

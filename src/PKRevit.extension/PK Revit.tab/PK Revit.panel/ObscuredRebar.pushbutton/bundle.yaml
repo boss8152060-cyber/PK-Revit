@@ -1,0 +1,6 @@
+title: Show/Hide Obscured
+tooltip: >-
+  เปิด/ปิด "Show Rebar Obscured" ใน view ปัจจุบัน — เลือกหมวด host (คาน เสา ฐานราก พื้น ผนัง)
+  × ชนิดเหล็ก (Rebar / Area-Path / Fabric) และสวิตช์ แสดง/ซ่อน ในหน้าต่างเดียว
+  ใช้กับ view ที่ active เท่านั้น; Ctrl+Z ย้อนได้
+author: PK Revit

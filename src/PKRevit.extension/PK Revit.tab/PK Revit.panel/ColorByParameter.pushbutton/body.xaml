@@ -1,0 +1,85 @@
+<StackPanel>
+    <StackPanel.Resources>
+        <Style x:Key="Soft" TargetType="Button">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="{StaticResource Field}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+            <Setter Property="Foreground" Value="{StaticResource TxtMain}"/>
+        </Style>
+    </StackPanel.Resources>
+
+    <TextBlock x:Name="tb_info" FontSize="12" TextWrapping="Wrap"
+               Foreground="{StaticResource TxtDim}"/>
+
+    <TextBlock Text="1) เลือกประเภทและพารามิเตอร์" FontSize="11.5" Foreground="{StaticResource Accent}"
+               FontWeight="SemiBold" Margin="0,12,0,6"/>
+    <StackPanel Orientation="Horizontal">
+        <RadioButton x:Name="rb_rebar" Content="เหล็กเสริม" IsChecked="True" GroupName="mode" Margin="0,0,18,0"/>
+        <RadioButton x:Name="rb_struct" Content="ชิ้นงานโครงสร้าง" GroupName="mode"/>
+    </StackPanel>
+    <StackPanel x:Name="pnl_cats" Orientation="Horizontal" Margin="0,4,0,0" Visibility="Collapsed">
+        <CheckBox x:Name="cb_beam" Content="คาน" IsChecked="True" Margin="0,0,12,0"/>
+        <CheckBox x:Name="cb_column" Content="เสา" IsChecked="True" Margin="0,0,12,0"/>
+        <CheckBox x:Name="cb_found" Content="ฐานราก" Margin="0,0,12,0"/>
+        <CheckBox x:Name="cb_floor" Content="พื้น" Margin="0,0,12,0"/>
+        <CheckBox x:Name="cb_wall" Content="ผนัง"/>
+    </StackPanel>
+    <Grid Margin="0,8,0,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="120"/><ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Text="พารามิเตอร์" VerticalAlignment="Center"/>
+        <ComboBox x:Name="cmb_param" Grid.Column="1" Height="26" Margin="0,0,0,6"/>
+        <TextBlock Grid.Row="1" Text="ชุดสี" VerticalAlignment="Center"/>
+        <ComboBox x:Name="cmb_scheme" Grid.Row="1" Grid.Column="1" Height="26"/>
+    </Grid>
+    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+        <Button x:Name="btn_scan" Content="สแกนค่า" Style="{StaticResource Soft}"/>
+        <Button x:Name="btn_regen" Content="สุ่มสีใหม่" Style="{StaticResource Soft}"/>
+        <Button x:Name="btn_all" Content="เลือกทั้งหมด" Style="{StaticResource Soft}"/>
+        <Button x:Name="btn_none" Content="ไม่เลือก" Style="{StaticResource Soft}"/>
+    </StackPanel>
+
+    <TextBlock Text="2) ค่าที่พบ (ติ๊กเลือก คลิกช่องสีเพื่อเปลี่ยนสี)" FontSize="11.5"
+               Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,14,0,6"/>
+    <TextBox x:Name="tb_filter" Width="Auto" HorizontalContentAlignment="Left" Margin="0,0,0,6"/>
+    <Border BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6"
+            Background="{StaticResource Field}">
+        <ScrollViewer Height="210" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="pnl_values" Margin="8,0,8,6"/>
+        </ScrollViewer>
+    </Border>
+    <TextBlock x:Name="tb_scan" FontSize="11.5" Foreground="{StaticResource TxtDim}" Margin="0,6,0,0"
+               TextWrapping="Wrap"/>
+
+    <TextBlock Text="3) ตัวเลือกการระบาย" FontSize="11.5" Foreground="{StaticResource Accent}"
+               FontWeight="SemiBold" Margin="0,14,0,6"/>
+    <StackPanel Orientation="Horizontal">
+        <RadioButton x:Name="rb_cur" Content="view ปัจจุบัน" IsChecked="True" GroupName="views" Margin="0,0,18,0"/>
+        <RadioButton x:Name="rb_multi" Content="หลาย view ที่เลือก" GroupName="views"/>
+        <Button x:Name="btn_views" Content="เลือก view..." Style="{StaticResource Soft}"
+                Margin="14,0,0,0" IsEnabled="False"/>
+    </StackPanel>
+    <TextBlock x:Name="tb_views" FontSize="11" Foreground="{StaticResource TxtDim}" TextWrapping="Wrap"
+               Margin="0,4,0,0"/>
+    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+        <RadioButton x:Name="rb_solid" Content="ระบายทึบ (fill + เส้น)" IsChecked="True" GroupName="fill" Margin="0,0,18,0"/>
+        <RadioButton x:Name="rb_line" Content="เส้นขอบอย่างเดียว" GroupName="fill"/>
+    </StackPanel>
+
+    <TextBlock Text="คืนสี (เฉพาะ element ที่เครื่องมือนี้เคยระบายไว้ — ไม่แตะสีของคนอื่น)" FontSize="11.5"
+               Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,14,0,6"/>
+    <StackPanel Orientation="Horizontal">
+        <Button x:Name="btn_reset_cur" Content="Reset view ปัจจุบัน" Style="{StaticResource Soft}"/>
+        <Button x:Name="btn_reset_all" Content="Reset ทุก view ที่เคยระบาย" Style="{StaticResource Soft}"/>
+    </StackPanel>
+    <TextBlock x:Name="tb_warn" FontSize="11" Foreground="#111111" FontWeight="SemiBold"
+               TextWrapping="Wrap" Margin="0,8,0,0"/>
+</StackPanel>

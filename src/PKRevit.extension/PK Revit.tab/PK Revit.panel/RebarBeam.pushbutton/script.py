@@ -18,6 +18,7 @@ from pyrevit import revit, DB, forms, script
 
 from revotech import rebar as rb
 from revotech import ui
+from revotech import hostconfig
 from revotech import beamcalc as bc
 from revotech.rvt import ename, id_value, selected, type_name
 from revotech.units import mm_to_ft, ft_to_mm
@@ -190,16 +191,27 @@ def build_spec(v):
 
 
 # ---------------------------------------------------------------- main
-beams = [b for b in selected(uidoc, doc, DB.BuiltInCategory.OST_StructuralFraming)
-         if is_beam(b)]
-if not beams:
-    ui.need_selection(u"คาน", u"(คลิกคานที่ต้องการ แล้วกดปุ่มใหม่ — เลือกได้หลายตัว)")
+try:
+    _OVR = CONFIG_OVERRIDE      # Propagate Rebar: รันโดยไม่เปิดฟอร์ม
+except NameError:
+    _OVR = None
 
 types = rb.bar_types(doc)
-form = BeamForm(len(beams), types)
-v = form.show()
-if not v:
-    script.exit()
+if _OVR is None:
+    beams = [b for b in selected(uidoc, doc, DB.BuiltInCategory.OST_StructuralFraming)
+             if is_beam(b)]
+    if not beams:
+        ui.need_selection(u"คาน", u"(คลิกคานที่ต้องการ แล้วกดปุ่มใหม่ — เลือกได้หลายตัว)")
+    form = BeamForm(len(beams), types)
+    v = form.show()
+    if not v:
+        script.exit()
+else:
+    beams = [b for b in hostconfig.hosts_from_override(doc, _OVR) if is_beam(b)]
+    v, _miss = hostconfig.override_values(_OVR, rb.BAR_NAMES, types)
+    _prob = hostconfig.override_problem(beams, _miss)
+    if _prob:
+        forms.alert(_prob, title=u"PK Revit — Rebar คาน", exitscript=True)
 
 if v["same"]:
     names = set(type_name(doc, b) for b in beams)
@@ -296,6 +308,8 @@ try:
             p = r.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
             if p is not None and not p.IsReadOnly:
                 p.Set(MARK)
+        if created:
+            hostconfig.save(beam, "beam", v)   # จำค่าไว้ที่คานตัวนี้
         done_beams += 1
         log.append(u"{}: ยาว {:.0f} มม. หน้าตัด {:.0f}x{:.0f} · ท่อนเหล็ก {} · ปลอก ~{} ตัว · "
                    u"จุดต่อบน {} / ล่าง {}".format(
