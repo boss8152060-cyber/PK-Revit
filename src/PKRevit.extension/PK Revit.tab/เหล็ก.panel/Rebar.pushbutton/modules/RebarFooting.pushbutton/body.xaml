@@ -81,6 +81,23 @@
     <TextBlock Text="  ม. (ถึงผิวเหล็กนอกสุด)" VerticalAlignment="Center" Foreground="{StaticResource TxtDim}"/>
 </StackPanel>
 
+<TextBlock Text="รูปเหล็ก / ตะขอ / ต่อทาบ" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<Grid>
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="150"/><ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <TextBlock Grid.Row="0" Text="Rebar Shape เหล็กหลัก" VerticalAlignment="Center"/>
+    <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,6" x:Name="cmb_shape_main" Height="26"/>
+    <TextBlock Grid.Row="1" Text="Rebar Shape ปลอก/เหล็กรัด" VerticalAlignment="Center"/>
+    <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,0,0,6" x:Name="cmb_shape_tie" Height="26"/>
+</Grid>
+<TextBlock Text="เลือก Rebar Shape = สร้างจากรูปเหล็กในโปรเจกต์ (ฐานรากใช้ตัวเลือกตะขอเดิมของฟอร์มในโหมดอัตโนมัติ)" FontSize="10" Foreground="{StaticResource TxtDim}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+
 <TextBlock Text="ด่านตรวจก่อนสร้าง" FontSize="11.5" Foreground="{StaticResource Accent}"
            FontWeight="SemiBold" Margin="0,14,0,6"/>
 <TextBlock x:Name="tb_check" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,4"/>

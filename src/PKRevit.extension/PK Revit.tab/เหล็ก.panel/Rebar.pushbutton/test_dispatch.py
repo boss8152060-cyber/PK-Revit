@@ -20,8 +20,10 @@ from revotech import hostconfig  # noqa: E402
 TAB = os.path.join(EXT, "PK Revit.tab")
 MODULES = os.path.join(HERE, "modules")
 ROOF = os.path.join(TAB, u"หลังคา.panel", "Roof.pushbutton")
-MANAGE = os.path.join(TAB, u"เหล็ก.panel", u"จัดการเหล็ก.pulldown")
-OUTPUT = os.path.join(TAB, u"ผลลัพธ์.panel", u"ถอดปริมาณ.pulldown")
+PANEL = os.path.join(TAB, u"เหล็ก.panel")
+COL_A = os.path.join(PANEL, "ManageA.stack3")
+COL_B = os.path.join(PANEL, "ManageB.stack3")
+OUTPUT = os.path.join(TAB, u"ผลลัพธ์.panel")
 
 
 def _write(path, text):
@@ -160,7 +162,7 @@ class RealLayout(unittest.TestCase):
 
     def test_propagate_finds_modules(self):
         # สูตรเดียวกับ PropagateRebar._module_path
-        pb = os.path.join(MANAGE, "PropagateRebar.pushbutton")
+        pb = os.path.join(COL_A, "PropagateRebar.pushbutton")
         here = os.path.dirname(pb)
         panel = os.path.dirname(here)
         for kind in dp.KIND_ORDER:
@@ -184,22 +186,35 @@ class RealLayout(unittest.TestCase):
             return os.path.isdir(os.path.join(TAB, *parts))
         self.assertTrue(has(u"เหล็ก.panel", "Rebar.pushbutton"))
         self.assertTrue(has(u"หลังคา.panel", "Roof.pushbutton"))
-        self.assertTrue(has(u"ผลลัพธ์.panel", u"ถอดปริมาณ.pulldown", "BarCut.pushbutton"))
-        self.assertTrue(has(u"ผลลัพธ์.panel", u"ถอดปริมาณ.pulldown", "QtoTables.pushbutton"))
+        self.assertTrue(has(u"ผลลัพธ์.panel", "BarCut.pushbutton"))
+        self.assertTrue(has(u"ผลลัพธ์.panel", "QtoTables.pushbutton"))
+        self.assertFalse(has(u"ผลลัพธ์.panel", u"ถอดปริมาณ.pulldown"))
+        self.assertFalse(has(u"เหล็ก.panel", u"จัดการเหล็ก.pulldown"))
         self.assertTrue(has(u"ตั้งค่า.panel", "License.pushbutton"))
         self.assertFalse(has("PK Revit.panel"))
-        buttons = sorted(n for n in os.listdir(MANAGE) if n.endswith(".pushbutton"))
-        self.assertEqual(buttons, sorted([
-            "SelectRebar.pushbutton", "SelectHost.pushbutton", "DeleteRebar.pushbutton",
+        def btns(d):
+            return sorted(n for n in os.listdir(d) if n.endswith(".pushbutton"))
+        self.assertEqual(btns(COL_A), sorted([
+            "Select.pushbutton", "DeleteRebar.pushbutton", "PropagateRebar.pushbutton"]))
+        self.assertEqual(btns(COL_B), sorted([
             "ObscuredRebar.pushbutton", "RebarCollision.pushbutton",
-            "ColorByParameter.pushbutton", "PropagateRebar.pushbutton"]))
+            "ColorByParameter.pushbutton"]))
+        # ชื่อใน layout ต้องมีโฟลเดอร์จริง
+        for panel in (PANEL, OUTPUT):
+            with io.open(os.path.join(panel, "bundle.yaml"), encoding="utf-8") as f:
+                names = [l.strip()[2:].strip() for l in f if l.strip().startswith("- ")]
+            for n in names:
+                self.assertTrue(any(e.rsplit(".", 1)[0] == n for e in os.listdir(panel)), n)
 
     def test_icons_96(self):
         try:
             from PIL import Image
         except ImportError:
             self.skipTest("no PIL")
-        for d in (HERE, ROOF, MANAGE, OUTPUT):
+        dirs = [HERE, ROOF] + [os.path.join(c, b) for c in (COL_A, COL_B) for b in os.listdir(c)
+                               if b.endswith(".pushbutton")]
+        dirs += [os.path.join(OUTPUT, b) for b in ("BarCut.pushbutton", "QtoTables.pushbutton")]
+        for d in dirs:
             for n in ("icon.png", "icon.dark.png"):
                 self.assertEqual(Image.open(os.path.join(d, n)).size, (96, 96))
 

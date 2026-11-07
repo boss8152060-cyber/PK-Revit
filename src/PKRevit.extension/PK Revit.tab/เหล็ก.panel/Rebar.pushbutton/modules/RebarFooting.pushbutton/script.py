@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import footing_calc as fc  # noqa: E402
 
 from revotech import rebar as rb  # noqa: E402
+from revotech import rebaropts as ro  # noqa: E402
 from revotech import hostconfig  # noqa: E402
 from revotech import ui  # noqa: E402
 from revotech import formpreview as fpv  # noqa: E402
@@ -106,7 +107,8 @@ def footprint(inst):
 
 # ---------------------------------------------------------------- form
 class FootingForm(ui.RevoWindow):
-    def __init__(self, n_sel, n_rect, n_tri, n_other, bar_types, preview_shape=None):
+    def __init__(self, n_sel, n_rect, n_tri, n_other, bar_types, preview_shape=None,
+                 shapes=None):
         body = os.path.join(os.path.dirname(__file__), "body.xaml")
         ui.RevoWindow.__init__(
             self, body, u"REBAR ", u"ฐานราก",
@@ -143,6 +145,8 @@ class FootingForm(ui.RevoWindow):
             tb.TextChanged += self._changed
         for r in (self.rb_h1, self.rb_h2, self.rb_h3, self.cb_ring):
             r.Click += self._changed
+        sh_main, sh_tie = shapes or ((), ())
+        ro.fill(self, list(sh_main), list(sh_tie), hooks=False, stagger=False)
         self._check()
         fpv.bind(self, self._scene,
                  lambda: fpv.footing_preview(fc, self.preview_shape, self._read_safe(), self.n_sel))
@@ -201,6 +205,7 @@ class FootingForm(ui.RevoWindow):
         v = self._read()
         v["same"] = bool(self.cb_same.IsChecked)
         v["replace"] = bool(self.cb_replace.IsChecked)
+        v.update(ro.read(self, hooks=False))    # Rebar Shape ตะแกรง/เหล็กรัดรอบ
         return v
 
 
@@ -216,6 +221,7 @@ if _OVR is None:
     if not foots:
         ui.need_selection(u"ฐานราก", u"(คลิกฐานรากที่ต้องการ แล้วกดปุ่มใหม่ — เลือกได้หลายฐาน)")
 else:
+    shapes_main, shapes_tie = rb.shape_names(doc)
     foots = hostconfig.hosts_from_override(doc, _OVR)
     v, _miss = hostconfig.override_values(_OVR, rb.BAR_NAMES, types)
     _prob = hostconfig.override_problem(foots, _miss)
@@ -266,7 +272,9 @@ def _preview_shape(f):
 
 
 if _OVR is None:
-    form = FootingForm(len(foots), nr, nt, no, types, _preview_shape(foots[0]))
+    shapes_main, shapes_tie = rb.shape_names(doc)
+    form = FootingForm(len(foots), nr, nt, no, types, _preview_shape(foots[0]),
+                       (list(shapes_main), list(shapes_tie)))
     v = form.show()
     if not v:
         script.exit()
@@ -286,6 +294,12 @@ d_ring = rb.bar_dia_mm(ring_size) if ring_on else 0.0
 t_ring = types[ring_size] if ring_on else None
 hook_pat = v["hook"]
 log = []
+sh_main = ro.shape_choice(v, "shape_main", shapes_main)
+sh_tie = ro.shape_choice(v, "shape_tie", shapes_tie)
+for _k, _sh in (("shape_main", shapes_main), ("shape_tie", shapes_tie)):
+    _m = ro.missing_shape(v, _k, _sh)
+    if _m:
+        log.append(u"ไม่พบ Rebar Shape '{}' ในโปรเจกต์นี้ — ใช้แบบอัตโนมัติแทน".format(_m))
 made_mat = made_ring = failed = 0
 done = 0
 skipped = []
@@ -352,7 +366,15 @@ try:
                           rb.line(pb, P(c, b["z"] + leg))]
             else:
                 curves = [rb.line(pa, pb)]
-            r = rb.create(doc, ft, types[b["size"]], curves, nrm)
+            if sh_main is not None:
+                # Rebar Shape: ความยาว = แนวเส้น, ขา = ชี้ขึ้นแบบ short_side (ปรับขนาดด้วย ScaleToBox)
+                L_ = mm_to_ft(ln)
+                r = rb.create_from_shape(
+                    doc, ft, sh_main, types[b["size"]], pa,
+                    pb.Subtract(pa),
+                    tf.BasisZ.Multiply(rb.short_side_ft(L_, mm_to_ft(b["dia"]))))
+            else:
+                r = rb.create(doc, ft, types[b["size"]], curves, nrm)
             if r is None:
                 failed += 1
             else:
@@ -370,8 +392,14 @@ try:
                     m = len(rp)
                     loop = [rb.line(P(rp[i], zr), P(rp[(i + 1) % m], zr))
                             for i in range(m)]
-                    r = rb.create(doc, ft, t_ring, loop, tf.BasisZ,
-                                  style=DB.Structure.RebarStyle.StirrupTie)
+                    if sh_tie is not None and kind == "rect" and m == 4:
+                        p0_ = P(rp[0], zr)
+                        r = rb.create_from_shape(
+                            doc, ft, sh_tie, t_ring, p0_,
+                            P(rp[1], zr).Subtract(p0_), P(rp[3], zr).Subtract(p0_))
+                    else:
+                        r = rb.create(doc, ft, t_ring, loop, tf.BasisZ,
+                                      style=DB.Structure.RebarStyle.StirrupTie)
                     if r is None:
                         failed += 1
                     else:

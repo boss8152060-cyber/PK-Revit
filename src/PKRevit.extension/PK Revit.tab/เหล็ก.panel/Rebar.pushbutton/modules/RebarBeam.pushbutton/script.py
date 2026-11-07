@@ -17,6 +17,7 @@ import traceback
 from pyrevit import revit, DB, forms, script
 
 from revotech import rebar as rb
+from revotech import rebaropts as ro
 from revotech import ui
 from revotech import formpreview as fpv
 from revotech import hostconfig
@@ -104,7 +105,7 @@ def hook90(doc_, mult):
 
 # ---------------------------------------------------------------- form
 class BeamForm(ui.RevoWindow):
-    def __init__(self, n_sel, bar_types, preview_ext=None):
+    def __init__(self, n_sel, bar_types, preview_ext=None, shapes=None):
         body = os.path.join(os.path.dirname(__file__), "body.xaml")
         ui.RevoWindow.__init__(
             self, body, u"REBAR ", u"คาน",
@@ -128,6 +129,8 @@ class BeamForm(ui.RevoWindow):
         ui.combo_fill(self.cmb_tie, have_t, u"RB9" if u"RB9" in have_t else None)
         ui.combo_fill(self.cmb_hook, HOOK_ITEMS, HOOK_ITEMS[0])
         self.tb_hook.Text = u"12"
+        sh_main, sh_tie = shapes or ((), ())
+        ro.fill(self, list(sh_main), list(sh_tie), hooks=True, stagger=False)
         missing = [] if bar_types else [u"(ไม่มี Bar Type เลย)"]
         if missing:
             self.tb_check.Text = (u"✗ ไม่พบ Rebar Bar Type ในโปรเจกต์: {} — ขนาดที่ไม่ได้ใช้ไม่เป็นไร"
@@ -155,6 +158,7 @@ class BeamForm(ui.RevoWindow):
              "max_len": ui.num(self.tb_maxlen.Text, 10.0) * 1000.0,
              "lap_d": ui.num(self.tb_lap.Text, rb.LAP_D),
              "cover": ui.num(self.tb_cover.Text, 0.025) * 1000.0}
+        v.update(ro.read(self))
         return fpv.beam_preview(self.preview_ext, build_spec(v), self.n_sel)
 
     def _grp(self, nm):
@@ -193,6 +197,8 @@ class BeamForm(ui.RevoWindow):
             "lap_d": ui.num(self.tb_lap.Text, rb.LAP_D),
             "cover": ui.num(self.tb_cover.Text, 0.025) * 1000.0,
         }
+        v.update(ro.read(self))     # รูปเหล็ก/ตะขอปลายคาน
+        return v
 
 
 def build_spec(v):
@@ -212,6 +218,8 @@ def build_spec(v):
         "xtop": ext("xtop"), "xbot": ext("xbot"),
         "side": tri("side") if g["side"][0] > 0 else None,
         "end_len": v["end_len"], "sp_end": v["sp_end"], "sp_mid": v["sp_mid"],
+        # ตะขอปลายคานซ้าย/ขวา: 'keep' (ตามเดิม 90°) | 'none' | (องศา, ตัวคูณ×d)
+        "hk_a": ro.hook_spec(v, "a"), "hk_b": ro.hook_spec(v, "b"),
     }
 
 
@@ -239,11 +247,14 @@ if _OVR is None:
              if is_beam(b)]
     if not beams:
         ui.need_selection(u"คาน", u"(คลิกคานที่ต้องการ แล้วกดปุ่มใหม่ — เลือกได้หลายตัว)")
-    form = BeamForm(len(beams), types, preview_extents(beams[0]))
+    shapes_main, shapes_tie = rb.shape_names(doc)
+    form = BeamForm(len(beams), types, preview_extents(beams[0]),
+                    (list(shapes_main), list(shapes_tie)))
     v = form.show()
     if not v:
         script.exit()
 else:
+    shapes_main, shapes_tie = rb.shape_names(doc)
     beams = [b for b in hostconfig.hosts_from_override(doc, _OVR) if is_beam(b)]
     v, _miss = hostconfig.override_values(_OVR, rb.BAR_NAMES, types)
     _prob = hostconfig.override_problem(beams, _miss)
@@ -259,6 +270,24 @@ if v["same"]:
 
 spec = build_spec(v)
 log = []
+sh_main = ro.shape_choice(v, "shape_main", shapes_main)
+sh_tie = ro.shape_choice(v, "shape_tie", shapes_tie)
+for _k, _sh in (("shape_main", shapes_main), ("shape_tie", shapes_tie)):
+    _m = ro.missing_shape(v, _k, _sh)
+    if _m:
+        log.append(u"ไม่พบ Rebar Shape '{}' ในโปรเจกต์นี้ — ใช้แบบอัตโนมัติแทน".format(_m))
+if sh_main is not None and (spec["hk_a"] != "keep" or spec["hk_b"] != "keep"):
+    log.append(u"เลือก Rebar Shape เหล็กหลัก — ตัวเลือกตะขอปลายซ้าย/ขวาถูกข้าม (ใช้ตะขอในตัว shape)")
+_hook_cache = {}
+
+
+def end_hook(spec_hk, dia):
+    """ตะขอปลายคานตามที่เลือก: keep→90° เดิม, none→ไม่มี, (องศา,×d)→hook type ใหม่/ที่มี"""
+    key = (spec_hk, dia)
+    if key not in _hook_cache:
+        _hook_cache[key] = rb.resolve_hook(doc, spec_hk, dia, keep=hook90t)             if spec_hk != "keep" else hook90t
+    return _hook_cache[key]
+
 counts = {}
 made_tie = failed = 0
 skipped = []
@@ -313,9 +342,17 @@ try:
             w = -up if hdir == 'down' else up
             n = d.CrossProduct(w).Normalize()   # n x d = w → ขางอ "Left" ชี้ไปทาง w
             ln = rb.line(P(b["s_a"], b["u"], b["v"]), P(b["s_b"], b["u"], b["v"]))
-            r = rb.create(doc, beam, tmap, [ln], n,
-                          hook_start=hook90t if b["hook_a"] else None,
-                          hook_end=hook90t if b["hook_b"] else None)
+            if sh_main is not None:
+                # Rebar Shape: กล่อง = ความยาวท่อน × ขา (ขาหันตามทิศ w ของตะขอเดิม)
+                L_ = mm_to_ft(b["s_b"] - b["s_a"])
+                r = rb.create_from_shape(
+                    doc, beam, sh_main, tmap, P(b["s_a"], b["u"], b["v"]),
+                    d.Multiply(L_),
+                    w.Multiply(rb.short_side_ft(L_, mm_to_ft(b["dia"]))))
+            else:
+                r = rb.create(doc, beam, tmap, [ln], n,
+                              hook_start=end_hook(spec["hk_a"], b["dia"]) if b["hook_a"] else None,
+                              hook_end=end_hook(spec["hk_b"], b["dia"]) if b["hook_b"] else None)
             if r is None:
                 failed += 1
             else:
@@ -329,9 +366,14 @@ try:
                     rb.line(P(zs, ub, va), P(zs, ub, vb)),
                     rb.line(P(zs, ub, vb), P(zs, ua, vb)),
                     rb.line(P(zs, ua, vb), P(zs, ua, va))]
-            r = rb.create(doc, beam, tie_t, loop, d,
-                          style=DB.Structure.RebarStyle.StirrupTie,
-                          hook_start=hook135, hook_end=hook135)
+            if sh_tie is not None:
+                r = rb.create_from_shape(
+                    doc, beam, sh_tie, tie_t, P(zs, ua, va),
+                    side.Multiply(mm_to_ft(ub - ua)), up.Multiply(mm_to_ft(vb - va)))
+            else:
+                r = rb.create(doc, beam, tie_t, loop, d,
+                              style=DB.Structure.RebarStyle.StirrupTie,
+                              hook_start=hook135, hook_end=hook135)
             if r is None:
                 failed += 1
                 continue

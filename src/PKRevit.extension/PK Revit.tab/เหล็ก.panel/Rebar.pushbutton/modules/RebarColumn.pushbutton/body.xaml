@@ -49,6 +49,32 @@
     <TextBlock Text="  ม. (ถึงผิวเหล็กปลอก)" VerticalAlignment="Center" Foreground="{StaticResource TxtDim}"/>
 </StackPanel>
 
+<TextBlock Text="รูปเหล็ก / ตะขอ / ต่อทาบ" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<Grid>
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="150"/><ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <TextBlock Grid.Row="0" Text="Rebar Shape เหล็กหลัก" VerticalAlignment="Center"/>
+    <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,6" x:Name="cmb_shape_main" Height="26"/>
+    <TextBlock Grid.Row="1" Text="Rebar Shape ปลอก/เหล็กรัด" VerticalAlignment="Center"/>
+    <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,0,0,6" x:Name="cmb_shape_tie" Height="26"/>
+    <TextBlock Grid.Row="2" Text="ตะขอปลายซ้าย/ล่าง" VerticalAlignment="Center"/>
+    <Grid Grid.Row="2" Grid.Column="1" Margin="0,0,0,6"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="70"/></Grid.ColumnDefinitions><ComboBox x:Name="cmb_hk_a" Height="26" Margin="0,0,6,0"/><TextBox x:Name="tb_hk_a" Grid.Column="1" ToolTip="ตัวคูณ × d ของช่วงตรงปลายตะขอ (ว่าง = ค่ามาตรฐานของมุม)"/></Grid>
+    <TextBlock Grid.Row="3" Text="ตะขอปลายขวา/บน" VerticalAlignment="Center"/>
+    <Grid Grid.Row="3" Grid.Column="1" Margin="0,0,0,6"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="70"/></Grid.ColumnDefinitions><ComboBox x:Name="cmb_hk_b" Height="26" Margin="0,0,6,0"/><TextBox x:Name="tb_hk_b" Grid.Column="1" ToolTip="ตัวคูณ × d ของช่วงตรงปลายตะขอ (ว่าง = ค่ามาตรฐานของมุม)"/></Grid>
+    <TextBlock Grid.Row="4" Text="สลับจุดต่อทาบ" VerticalAlignment="Center"/>
+    <ComboBox Grid.Row="4" Grid.Column="1" Margin="0,0,0,6" x:Name="cmb_stagger" Height="26"/>
+</Grid>
+<TextBlock Text="ตะขอ: ช่องขวา = ตัวคูณ × d ของช่วงตรงปลาย (ว่าง = 45°→6, 90°→12, 135°→6 (ขั้นต่ำ 75 มม.), 180°→4) · เลือก Rebar Shape = สร้างจากรูปเหล็กในโปรเจกต์ (ตะขอมาจากตัว shape ตัวเลือกตะขอจะถูกข้าม)" FontSize="10" Foreground="{StaticResource TxtDim}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+
 <TextBlock Text="ด่านตรวจก่อนสร้าง" FontSize="11.5" Foreground="{StaticResource Accent}"
            FontWeight="SemiBold" Margin="0,14,0,6"/>
 <TextBlock x:Name="tb_check" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,4"/>

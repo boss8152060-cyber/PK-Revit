@@ -54,7 +54,7 @@ import revotech
 revotech.presetlogic = _mod("revotech.presetlogic", safe_name=lambda t: t or None)
 revotech.presetstore = _mod("revotech.presetstore", local_list=lambda m: [],
                             project_names=lambda a, m: [], project_read=lambda d: {})
-from revotech import ui, scene3d, formpreview
+from revotech import ui, scene3d, formpreview, rebaropts, hookcalc
 
 # --- rebar แบบจิ๋ว (rebar.py จริง import Autodesk)
 rb = type(sys)("rb")
@@ -87,7 +87,7 @@ def load_form_class(module, cls, extra):
     a = src.index("# ---------------------------------------------------------------- form")
     b = src.index("# ---------------------------------------------------------------- main")
     ns = {"__file__": path, "os": os, "rb": rb, "ui": ui, "fpv": formpreview, "math": __import__("math"),
-          "fc": fc, "sc": (sc_slab if module == "RebarSlab" else sc_stair)}
+          "ro": rebaropts, "hk": hookcalc, "fc": fc, "sc": (sc_slab if module == "RebarSlab" else sc_stair)}
     ns.update(extra)
     exec(compile(src[a:b], path, "exec"), ns)
     return ns[cls]
@@ -144,6 +144,22 @@ w.preview.update(w._scene(), keep_view=True)     # แทน timer (ไม่ม
 assert w.preview.scene.groups[0].polys.__len__() == 12, "form->scene ไม่ตามค่าที่กรอก"
 finalize(w)
 save(w, "form_column_edited")
+# ตะขอ + สลับจุดต่อ + รายการ Rebar Shape จากโปรเจกต์ (ตัวอย่าง)
+w = Col(1, BAR_TYPES, (400.0, 400.0, 3000.0), ([u"M_00", u"M_L"], [u"M_T1", u"M_T2"]))
+sel(w.cmb_hk_a, u"90°")
+sel(w.cmb_hk_b, u"135°")
+w.tb_hk_b.Text = "8"
+sel(w.cmb_stagger, hookcalc.STAGGER_ALT)
+w.preview.update(w._scene(), keep_view=False)
+v = w.collect()
+assert v["hk_a"] == u"90°" and v["hk_b_mult"] == 8.0 and v["shape_main"] == rebaropts.AUTO_SHAPE, v
+assert rebaropts.hook_spec(v, "a") == (90, 12.0) and rebaropts.hook_spec(v, "b") == (135, 8.0)
+assert [len(p) for p in w.preview.scene.groups[0].polys][0] == 4, "preview ไม่แสดงตะขอ"
+sel(w.cmb_shape_main, u"M_L")
+assert w.collect()["shape_main"] == u"M_L"
+sel(w.cmb_shape_main, rebaropts.AUTO_SHAPE)
+finalize(w)
+save(w, "form_column_hooks")
 w = Col(3, BAR_TYPES, None)
 finalize(w)
 save(w, "form_column_gen_multi")                 # อ่านรูปทรงไม่ได้ + เลือก 3 ต้น
@@ -163,6 +179,14 @@ w.cmb_side_n.SelectedIndex = 2
 w.preview.update(w._scene(), keep_view=False)
 finalize(w)
 save(w, "form_beam")
+w = Beam(1, BAR_TYPES, (6000.0, 300.0, 600.0), ([u"M_00"], [u"M_T1"]))
+sel(w.cmb_hk_a, u"45°")
+sel(w.cmb_hk_b, hookcalc.HOOK_NONE)
+w.cmb_top1_n.SelectedIndex = 3
+w.preview.update(w._scene(), keep_view=False)
+assert w.collect() is not None
+finalize(w)
+save(w, "form_beam_hooks")
 w = Beam(4, BAR_TYPES, None)
 finalize(w)
 save(w, "form_beam_gen_multi")
@@ -183,6 +207,13 @@ w.rb_h1.IsChecked = True
 w.preview.update(w._scene(), keep_view=False)
 finalize(w)
 save(w, "form_footing")
+w = Foot(1, 1, 0, 0, BAR_TYPES, rect, ([u"M_00", u"M_L"], [u"M_T1"]))
+sel(w.cmb_long, u"DB16"); sel(w.cmb_short, u"DB16"); w.rb_h1.IsChecked = True
+sel(w.cmb_shape_main, u"M_L")
+vv = w.collect()
+assert vv is not None and vv["shape_main"] == u"M_L" and "hk_a" not in vv, vv
+finalize(w)
+save(w, "form_footing_shapes")
 w = Foot(2, 0, 2, 0, BAR_TYPES, tri)
 for c in (w.cmb_t0, w.cmb_t60, w.cmb_t120):
     sel(c, u"DB16")

@@ -219,5 +219,40 @@ class TestScene(unittest.TestCase):
         self.assertEqual(sc.spread(0, 0, 10), [])
 
 
+class TestHooksPreview(unittest.TestCase):
+    def test_hook_tail_angles(self):
+        t90 = sc.hook_tail((0, 0, 0), (0, 0, 1), (1, 0, 0), 90, 100)
+        self.assertAlmostEqual(t90[0], 100.0); self.assertAlmostEqual(t90[2], 0.0, places=6)
+        t180 = sc.hook_tail((0, 0, 0), (0, 0, 1), (1, 0, 0), 180, 100)
+        self.assertAlmostEqual(t180[2], -100.0)
+        t45 = sc.hook_tail((0, 0, 0), (0, 0, 1), (1, 0, 0), 45, 100)
+        self.assertAlmostEqual(t45[0], t45[2])
+
+    def test_column_default_unchanged(self):
+        a = sc.column_scene(400, 400, 3000, 4, 16, 9)
+        b = sc.column_scene(400, 400, 3000, 4, 16, 9, hook_a=None, hook_b=None, stagger=False)
+        self.assertEqual(a.groups[0].polys, b.groups[0].polys)
+        self.assertTrue(all(len(p) == 2 for p in a.groups[0].polys))
+
+    def test_column_hooks_and_stagger(self):
+        s = sc.column_scene(400, 400, 3000, 4, 16, 9, hook_a=(90, 12), hook_b=(135, 6), stagger=True)
+        polys = s.groups[0].polys
+        self.assertTrue(all(len(p) == 4 for p in polys))
+        tops = sorted(set(round(p[2][2]) for p in polys))
+        self.assertEqual(len(tops), 2)                 # สลับ: ความสูงปลายบนมี 2 ระดับ
+        self.assertAlmostEqual(tops[1] - tops[0], 1.3 * 640, delta=1)
+
+    def test_beam_hook_override(self):
+        base = sc.beam_scene(6000, 300, 600, {"top": [(2, 16.0, "DB16")], "bot": [(2, 16.0, "DB16")]})
+        none = sc.beam_scene(6000, 300, 600, {"top": [(2, 16.0, "DB16")], "bot": [(2, 16.0, "DB16")],
+                                              "hk_a": "none", "hk_b": "none"})
+        n_base = sum(len(p) for g in base.groups if g.key != "stirrup" for p in g.polys)
+        n_none = sum(len(p) for g in none.groups if g.key != "stirrup" for p in g.polys)
+        self.assertLess(n_none, n_base)
+        h45 = sc.beam_scene(6000, 300, 600, {"top": [(2, 16.0, "DB16")], "bot": [(2, 16.0, "DB16")],
+                                             "hk_a": (45, 6), "hk_b": (45, 6)})
+        self.assertEqual(sum(len(p) for g in h45.groups if g.key != "stirrup" for p in g.polys), n_base)
+
+
 if __name__ == "__main__":
     unittest.main()

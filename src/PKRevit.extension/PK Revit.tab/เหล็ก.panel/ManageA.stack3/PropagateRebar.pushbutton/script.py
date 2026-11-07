@@ -98,7 +98,7 @@ def _module_path(kind):
     """หาสคริปต์โมดูลเหล็ก: เก็บอยู่ที่ <panel>/Rebar.pushbutton/modules/<โมดูล>.pushbutton
     (script.py หรือ <ชื่อโมดูล>.py) — ลองโฟลเดอร์พี่น้องแบบเดิมเป็นทางสำรอง"""
     here = os.path.dirname(os.path.abspath(__file__))
-    panel = os.path.dirname(os.path.dirname(here))      # เหล็ก.panel
+    panel = os.path.dirname(os.path.dirname(here))      # เหล็ก.panel (ปุ่มอยู่ใน ManageA.stack3)
     dirs = [os.path.join(panel, u"Rebar.pushbutton", u"modules"),
             os.path.dirname(here)]
     return dispatch.find_in_dirs(dirs, hostconfig.KINDS[kind])

@@ -1,14 +1,28 @@
 # โครง ribbon ของ PK Revit (จัดกลุ่มใหม่)
 
-เดิมมี 17 ปุ่มกระจายใน panel เดียว ตอนนี้รวมเป็น 4 panel (พฤติกรรมของฟอร์มเดิมทุกตัวไม่เปลี่ยน — ปุ่มรวมแค่ "เลือกทาง" แล้วเรียกสคริปต์เดิม)
+เดิมมี 17 ปุ่มกระจายใน panel เดียว ตอนนี้รวมเป็น 4 panel และไม่มี pulldown เหลือ (พฤติกรรมของฟอร์มเดิมทุกตัวไม่เปลี่ยน — ปุ่มรวมแค่ "เลือกทาง" แล้วเรียกสคริปต์เดิม)
 
 | Panel | ปุ่ม | ทำอะไร |
 |---|---|---|
-| **เหล็ก** | **Rebar** | ดูว่าเลือกอะไรอยู่ → เปิดฟอร์มของชนิดนั้น (เสา/คาน/ฐานราก/พื้น/บันได) |
-| | pulldown **จัดการเหล็ก** | Select Rebar, Select Host, Delete Rebar, Show/Hide Obscured, Rebar Collision, Color by Parameter, Propagate Rebar |
+| **เหล็ก** | **Rebar** (ใหญ่ ซ้ายสุด) | ดูว่าเลือกอะไรอยู่ → เปิดฟอร์มของชนิดนั้น (เสา/คาน/ฐานราก/พื้น/บันได) |
+| | คอลัมน์ 1 (`ManageA.stack3`) | **เลือก** (รวม Select Rebar + Select Host), Delete Rebar, Propagate Rebar |
+| | คอลัมน์ 2 (`ManageB.stack3`) | Show/Hide Obscured, Rebar Collision, Color by Parameter |
 | **หลังคา** | **Roof** | หน้าต่างเลือก 2 ปุ่ม: โครงหลังคา (Roof Master) / วัสดุมุง (Roof Cover) |
-| **ผลลัพธ์** | pulldown **บาร์คัท & QTO** | บาร์คัท, QTO Tables |
+| **ผลลัพธ์** | **บาร์คัท**, **QTO Tables** | ปุ่มใหญ่ 2 ปุ่ม (ไม่มี pulldown) |
 | **ตั้งค่า** | **License** | รหัสสิทธิ์ + เลือกภาษา |
+
+### ปุ่ม "เลือก" (รวมสองปุ่มเดิม)
+`lib/revotech/selecttool.py` (ตรรกะเลือก/สรุปผลย้ายมาจาก SelectRebar/SelectHost เดิมโดยไม่เปลี่ยน):
+- เลือก host อยู่ → เลือกเหล็กทุกชนิดบน host นั้น
+- เลือกเหล็กอยู่ → เลือก host ของเหล็กนั้น
+- ไม่ได้เลือกอะไร → ถามว่าเอาทางไหน แล้วเข้า `hostpick.resolve` เหมือนเดิม (คลิกทีละตัว / ตาม Mark)
+- เลือกปนทั้ง host และเหล็ก → ถามว่าจะใช้ส่วนไหน
+
+### Show/Hide Obscured
+ตรวจโค้ดเดิมแล้ว: ฟอร์มมีสวิตช์ "แสดง (Show) / กลับเป็นปกติ (Hide)" อยู่ในหน้าต่างเดียวอยู่แล้ว จึงเป็นปุ่มเดียวอยู่แล้ว ไม่ต้องแก้
+
+### pyRevit stack
+`.stack3` วางปุ่มเล็ก 3 ปุ่มซ้อนเป็นคอลัมน์ (ไอคอน 16 px + ชื่อ) ลำดับใน `เหล็ก.panel/bundle.yaml`: `Rebar, ManageA, ManageB` ผลลัพธ์: `BarCut, QtoTables`
 
 Dang Gen ไม่มีปุ่มของตัวเอง (เดิมก็เป็นขั้นที่ 5 ของ Roof Master ใน `engines/`) จึงไม่แยกออกมา
 
@@ -25,17 +39,20 @@ PK Revit.tab/
         RebarColumn.pushbutton/  RebarBeam.pushbutton/  RebarFooting.pushbutton/
         RebarSlab.pushbutton/    RebarStair.pushbutton/
       test_dispatch.py
-    จัดการเหล็ก.pulldown/
-      SelectRebar / SelectHost / DeleteRebar / ObscuredRebar /
-      RebarCollision / ColorByParameter / PropagateRebar  (.pushbutton)
+    ManageA.stack3/
+      Select.pushbutton (ใหม่ — เรียก lib/revotech/selecttool.py)
+      DeleteRebar / PropagateRebar  (.pushbutton)
+    ManageB.stack3/
+      ObscuredRebar / RebarCollision / ColorByParameter  (.pushbutton)
   หลังคา.panel/
     Roof.pushbutton/
       script.py   body.xaml
       modules/RoofMaster.pushbutton/ (มี engines/ เหมือนเดิม)   modules/RoofCover.pushbutton/
-  ผลลัพธ์.panel/ถอดปริมาณ.pulldown/  BarCut.pushbutton  QtoTables.pushbutton
+  ผลลัพธ์.panel/  BarCut.pushbutton  QtoTables.pushbutton
   ตั้งค่า.panel/License.pushbutton
 lib/revotech/dispatch.py       ตรรกะจัดชนิด/หาสคริปต์/execfile (ไฟล์ใหม่)
 lib/revotech/hubwindow.py      หน้าต่างปุ่มใหญ่บน RevoWindow (ไฟล์ใหม่)
+lib/revotech/selecttool.py     ปุ่ม เลือก (host ↔ เหล็ก) (ไฟล์ใหม่)
 ```
 
 ชื่อโฟลเดอร์ของแต่ละโมดูลยังเป็น `RebarColumn.pushbutton` ฯลฯ เหมือนเดิม เพราะ `revotech.ui.RevoWindow` ใช้ชื่อโฟลเดอร์เป็นชื่อกลุ่ม Preset และ `hostconfig.KINDS` ชี้ชื่อนี้
@@ -58,7 +75,7 @@ lib/revotech/hubwindow.py      หน้าต่างปุ่มใหญ่�
 
 ### path ที่ตรวจแล้วว่าไม่พัง
 - Roof Master `step_path`: ตัวแรก (ปุ่มพี่น้องใน panel) ไม่มีแล้วแต่ตกมาที่ `engines/` ในโมดูลเอง ซึ่งย้ายไปพร้อมกัน; ไฟล์ `.rfa` ของ HipRidge/Purlin/Valley อ้างจากโฟลเดอร์ engine ด้วยกันเอง
-- Propagate Rebar `_module_path`: เดิมหาโฟลเดอร์พี่น้อง ตอนนี้หาที่ `เหล็ก.panel/Rebar.pushbutton/modules/` (มีทางสำรองแบบเดิม)
+- Propagate Rebar `_module_path`: (ย้ายเข้า `ManageA.stack3` แล้ว ความลึกจาก panel เท่าเดิม) เดิมหาโฟลเดอร์พี่น้อง ตอนนี้หาที่ `เหล็ก.panel/Rebar.pushbutton/modules/` (มีทางสำรองแบบเดิม)
 - Preset: ชื่อกลุ่มมาจากชื่อโฟลเดอร์โมดูล (ไม่เปลี่ยน) → preset ที่บันทึกไว้ยังใช้ได้
 - `test_*.py` ที่ย้ายแก้ path ไป `lib` ให้ตรงความลึกใหม่ (ไม่ได้แก้ตรรกะ)
 
@@ -87,3 +104,4 @@ find . -name "test_*.py" | while read f; do (cd "$(dirname "$f")" && python "$(b
 6. หน้าต่างเลือกซ่อนปุ่มรันและแถบ Preset ของ `RevoWindow` ด้วยการไล่หา StackPanel แม่ของ `pk_preset_cmb` — ตรวจ render XAML แล้วแต่ยังไม่ได้เปิดผ่าน pyRevit จริง
 7. กด ✕ หรือยกเลิกฟอร์มโมดูล แล้วโมดูลที่ 2+ ยังถูกถามต่อ (โมดูลจบด้วย exit ทั้งสองกรณี)
 8. ตัวติดตั้งในเครื่องผู้ใช้ที่เปลี่ยนชื่อสคริปต์เป็น `<ชื่อ>.py`: รองรับทั้ง modules และ engines แต่ถ้าเปลี่ยนชื่อ `body.xaml`/`ui.xaml` ด้วยจะหาไม่เจอ (ไม่ได้รองรับ)
+9. `.stack3` ในชื่อโฟลเดอร์ + ชื่อ stack เป็น ASCII (`ManageA/ManageB`) และอ้างใน `layout` ของ panel — ยังไม่เคยเห็นใน pyRevit จริง ถ้า stack ไม่ขึ้น/ปุ่มซ้ำให้ส่ง log; ปุ่ม "เลือก" ยังไม่เคยรันใน Revit (ใช้ `TaskDialog` + ฟังก์ชันเดิมของ Select Rebar/Select Host)

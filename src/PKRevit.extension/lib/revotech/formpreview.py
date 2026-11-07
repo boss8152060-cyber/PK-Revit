@@ -49,7 +49,8 @@ def _hostonly(title, host_list, notes, n_sel):
 
 # ------------------------------------------------------------ เสา
 def column_preview(ext, v, n_sel=1):
-    """ext=(w,h,H) มม. หรือ None; v = {n,d_main,d_tie,cover,end_len,sp_mid,sp_end,lap_d} (บางค่าเป็น None ได้)"""
+    """ext=(w,h,H) มม. หรือ None; v = {n,d_main,d_tie,cover,end_len,sp_mid,sp_end,lap_d,
+    hook_a,hook_b (องศา,×d)|None, stagger bool} (บางค่าเป็น None ได้) — ตะขอเป็นภาพประมาณ"""
     notes = []
     if ext is None or min(ext) <= 0:
         w, h, H = GENERIC["column"]
@@ -64,7 +65,9 @@ def column_preview(ext, v, n_sel=1):
         return _hostonly(u"เสา", box, notes + [u"ระยะเรียงปลอกน้อยเกินไป — ไม่แสดงเหล็ก"], n_sel)
     sc = scene3d.column_scene(w, h, H, v.get("n") or 4, dm, dt, v.get("cover", 25.0),
                               v.get("end_len", 600.0), v.get("sp_mid", 150.0),
-                              v.get("sp_end", 100.0), v.get("lap_d", 40.0))
+                              v.get("sp_end", 100.0), v.get("lap_d", 40.0),
+                              hook_a=v.get("hook_a"), hook_b=v.get("hook_b"),
+                              stagger=bool(v.get("stagger")))
     return _finish(sc, n_sel, notes)
 
 

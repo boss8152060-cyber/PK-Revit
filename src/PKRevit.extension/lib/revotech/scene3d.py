@@ -17,6 +17,7 @@ Scene = host (กล่อง/ปริซึมโปร่งของคา�
 """
 from __future__ import division
 import math
+from revotech import hookcalc
 
 # ------------------------------------------------------------ สี (RGB 0-255)
 RED = (220, 50, 47)
@@ -346,10 +347,22 @@ def column_tie_zones(z_start, z_end, end_len, sp_mid, sp_end):
     return zones
 
 
+def hook_tail(p, d, w, angle, ext):
+    """ปลายตะขอ (ภาพประมาณ): จุดสิ้นสุดเส้น p, ทิศเส้นออกจากปลายนั้น d, ทิศที่ตะขอเบนไป w (ตั้งฉาก d)
+    angle = องศาที่เหล็กหักจากแนวเดิม (90 = ตั้งฉาก, 135/180 = หักย้อนกลับ), ext = ช่วงตรงปลาย (มม.)
+    คืนจุดปลายสุด — วาดเป็นเส้นตรงตัดมุม ไม่วาดส่วนโค้ง"""
+    a = math.radians(angle)
+    c, s_ = math.cos(a), math.sin(a)
+    return tuple(p[i] + (d[i] * c + w[i] * s_) * ext for i in range(3))
+
+
 def column_scene(w, h, H, n, d_main, d_tie, cover=25.0, end_len=600.0,
-                 sp_mid=150.0, sp_end=100.0, lap_d=40.0, title=u"เสา"):
+                 sp_mid=150.0, sp_end=100.0, lap_d=40.0, title=u"เสา",
+                 hook_a=None, hook_b=None, stagger=False):
     """เสา w x h มม. สูง H; เหล็กยืน n เส้น (เลขคู่ >=4) ขนาด d_main; ปลอก d_tie
-    ค่าอื่นตรงกับ collect() ของฟอร์มเสา (cover, end_len, sp_mid, sp_end, lap_d)"""
+    ค่าอื่นตรงกับ collect() ของฟอร์มเสา (cover, end_len, sp_mid, sp_end, lap_d)
+    hook_a/hook_b = (องศา, ตัวคูณ×d) ตะขอปลายล่าง/บนของเหล็กยืน หรือ None; stagger=True สลับเส้นคี่ยื่นเพิ่ม 1.3×ทาบ
+    (ภาพประมาณ — ตะขอวาดเป็นเส้นตรงเบนเข้าหาแกนเสา)"""
     n = max(4, int(n))
     host = Host.box(-w / 2.0, -h / 2.0, 0, w / 2.0, h / 2.0, H, label=u"เสา")
     g_main = BarGroup("main", u"เหล็กยืน", RED, d_main / 2.0)
@@ -361,9 +374,24 @@ def column_scene(w, h, H, n, d_main, d_tie, cover=25.0, end_len=600.0,
         notes.append(u"หน้าตัด/ความสูงเล็กเกินไปเมื่อเทียบกับระยะหุ้ม")
         return Scene(title, [host], [g_main, g_tie], notes)
     lap = lap_d * d_main
-    for (x, y) in main_positions(n, -w / 2.0 + inset_main, w / 2.0 - inset_main,
-                                 -h / 2.0 + inset_main, h / 2.0 - inset_main):
-        g_main.add([(x, y, 0), (x, y, H + lap)])
+    for i, (x, y) in enumerate(main_positions(n, -w / 2.0 + inset_main, w / 2.0 - inset_main,
+                                              -h / 2.0 + inset_main, h / 2.0 - inset_main)):
+        top = H + lap + (hookcalc.stagger_extra_mm(i, lap, hookcalc.STAGGER_ALT)
+                         if stagger else 0.0)
+        pts = [(x, y, 0), (x, y, top)]
+        if hook_a or hook_b:
+            # ทิศเข้าหาแกนเสา: แกนที่ห่างศูนย์กลางมากกว่า (สัดส่วน)
+            if abs(x) / (w / 2.0) >= abs(y) / (h / 2.0):
+                wv = (-1.0 if x > 0 else 1.0, 0.0, 0.0)
+            else:
+                wv = (0.0, -1.0 if y > 0 else 1.0, 0.0)
+            if hook_a:
+                pts.insert(0, hook_tail((x, y, 0), (0, 0, 1), wv, hook_a[0],
+                                        hookcalc.hook_ext_mm(hook_a[0], hook_a[1], d_main)))
+            if hook_b:
+                pts.append(hook_tail((x, y, top), (0, 0, -1), wv, hook_b[0],
+                                     hookcalc.hook_ext_mm(hook_b[0], hook_b[1], d_main)))
+        g_main.add(pts)
     a, b = -w / 2.0 + inset_tie, w / 2.0 - inset_tie
     c, d = -h / 2.0 + inset_tie, h / 2.0 - inset_tie
     for (zz, ln, sp) in column_tie_zones(cover, H - cover, end_len, sp_mid, sp_end):
@@ -411,10 +439,16 @@ def beam_scene(L, b, h, spec=None, title=u"คาน"):
         pts = [(br["s_a"], br["u"], br["v"]), (br["s_b"], br["u"], br["v"])]
         for end, which in ((0, "hook_a"), (1, "hook_b")):
             kind = br[which]
-            if kind:
+            ov = sp.get("hk_a" if end == 0 else "hk_b", "keep")    # override จากฟอร์ม
+            if kind and ov != "none":
                 s = pts[0][0] if end == 0 else pts[-1][0]
                 dz = -hk if kind == "down" else hk
                 tip = (s, br["u"], br["v"] + dz)
+                if isinstance(ov, (tuple, list)):
+                    ext = hookcalc.hook_ext_mm(ov[0], ov[1], br["dia"])
+                    wv = (0.0, 0.0, -1.0 if kind == "down" else 1.0)
+                    dv = (-1.0, 0.0, 0.0) if end == 0 else (1.0, 0.0, 0.0)
+                    tip = hook_tail((s, br["u"], br["v"]), dv, wv, ov[0], ext)
                 if end == 0:
                     pts.insert(0, tip)
                 else:

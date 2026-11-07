@@ -10,9 +10,11 @@ import re
 import math
 from pyrevit import DB
 from Autodesk.Revit.DB.Structure import (
-    Rebar, RebarStyle, RebarBarType, RebarHookType, RebarHookOrientation)
+    Rebar, RebarStyle, RebarBarType, RebarHookType, RebarHookOrientation,
+    RebarShape)
 
 from revotech.units import mm_to_ft
+from revotech import hookcalc
 from revotech.rvt import ename
 
 # ชื่อ bar type ที่ฟอร์มในคลิปให้เลือก (ต้องมี RebarBarType ชื่อเดียวกันในโปรเจกต์)
@@ -111,3 +113,88 @@ def layout_fixed_number(rb, count, array_len_mm):
         return True
     except Exception:
         return False
+
+
+# ---------------------------------------------------------------- Rebar Shape / ตะขอเลือกเอง
+# (เพิ่มใน 0.13 — ยังไม่เคยรันใน Revit; แนวทาง CreateFromRebarShape อ้างจาก PK Tool)
+
+def shapes_in_project(doc, style):
+    """{ชื่อ: RebarShape} ของ RebarStyle ที่ระบุ (Standard = เหล็กหลัก, StirrupTie = ปลอก)
+    ชื่ออะไรก็ได้ตามที่มีในโปรเจกต์ ไม่เดาจากชื่อ"""
+    d = {}
+    try:
+        for s in DB.FilteredElementCollector(doc).OfClass(RebarShape):
+            try:
+                if s.RebarStyle == style:
+                    d[ename(s)] = s
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return d
+
+
+def shape_names(doc):
+    """({ชื่อ shape เหล็กหลัก}, {ชื่อ shape ปลอก}) เรียงตามชื่อ"""
+    main = shapes_in_project(doc, RebarStyle.Standard)
+    tie = shapes_in_project(doc, RebarStyle.StirrupTie)
+    return main, tie
+
+
+def _angle_match(h, angle_deg):
+    try:
+        a = h.HookAngle
+    except Exception:
+        return False
+    return abs(a - math.radians(angle_deg)) < 1e-3 or abs(a - angle_deg) < 0.5
+
+
+def hook_type_for(doc, angle_deg, mult, dia_mm):
+    """RebarHookType มุม angle_deg ช่วงตรงปลาย = mult × d (ขั้นต่ำตาม hookcalc เช่น 135° ≥ 75 มม.)
+    หาจากชื่อ PKRevit_Hook... ก่อน แล้วหาตัวที่มุม+ตัวคูณตรง ไม่งั้นสร้างใหม่ (ต้องอยู่ใน Transaction)"""
+    m = round(hookcalc.effective_mult(angle_deg, mult, dia_mm), 3)
+    name = u"PKRevit_Hook{}_{:g}d".format(int(angle_deg), m)
+    cands = list(DB.FilteredElementCollector(doc).OfClass(RebarHookType))
+    for h in cands:
+        try:
+            if ename(h) == name:
+                return h
+        except Exception:
+            continue
+    for h in cands:
+        try:
+            if _angle_match(h, angle_deg) and abs(h.Multiplier - m) < 1e-3:
+                return h
+        except Exception:
+            continue
+    h = RebarHookType.Create(doc, math.radians(angle_deg), float(m))
+    try:
+        h.Name = name
+    except Exception:
+        pass
+    return h
+
+
+def resolve_hook(doc, spec, dia_mm, keep=None):
+    """spec จาก rebaropts.hook_spec: 'keep'→keep, 'none'→None, (มุม,ตัวคูณ)→RebarHookType"""
+    if spec == "keep":
+        return keep
+    if spec == "none":
+        return None
+    return hook_type_for(doc, spec[0], spec[1], dia_mm)
+
+
+def create_from_shape(doc, host, shape, bar_type, origin, xvec, yvec):
+    """สร้างเหล็กจาก RebarShape แบบ PK Tool: CreateFromRebarShape แล้ว ScaleToBox
+    xvec/yvec ยาวเท่ากล่องจริง (CreateFromRebarShape ใช้แค่ทิศ ScaleToBox ปรับขนาด) — คืน Rebar หรือ None"""
+    try:
+        r = Rebar.CreateFromRebarShape(doc, shape, bar_type, host, origin, xvec, yvec)
+        r.GetShapeDrivenAccessor().ScaleToBox(origin, xvec, yvec)
+        return r
+    except Exception:
+        return None
+
+
+def short_side_ft(long_ft, dia_ft):
+    """ด้านสั้นของกล่อง ScaleToBox ของเหล็กเส้นตรง/ตัว L (สูตรเดียวกับ PK Tool: max(4d, 0.15 L))"""
+    return max(dia_ft * 4.0, long_ft * 0.15)

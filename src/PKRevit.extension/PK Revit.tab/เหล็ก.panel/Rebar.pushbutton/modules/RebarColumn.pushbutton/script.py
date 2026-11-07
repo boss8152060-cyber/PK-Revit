@@ -17,6 +17,8 @@ import traceback
 from pyrevit import revit, DB, forms, script
 
 from revotech import rebar as rb
+from revotech import rebaropts as ro
+from revotech import hookcalc as hk
 from revotech import hostconfig
 from revotech import ui
 from revotech import formpreview as fpv
@@ -86,7 +88,7 @@ def main_positions(n, x0, x1, y0, y1):
 
 # ---------------------------------------------------------------- form
 class ColumnForm(ui.RevoWindow):
-    def __init__(self, n_sel, bar_types, preview_ext=None):
+    def __init__(self, n_sel, bar_types, preview_ext=None, shapes=None):
         body = os.path.join(os.path.dirname(__file__), "body.xaml")
         ui.RevoWindow.__init__(
             self, body, u"REBAR ", u"เสา",
@@ -103,6 +105,8 @@ class ColumnForm(ui.RevoWindow):
         have_t = rb.names_in_project(bar_types)
         ui.combo_fill(self.cmb_tie, have_t or rb.TIE_BAR_NAMES, u"RB9"
                       if u"RB9" in have_t else None)
+        sh_main, sh_tie = shapes or ((), ())
+        ro.fill(self, list(sh_main), list(sh_tie), hooks=True, stagger=True)
         self._check()
         fpv.bind(self, self._scene, lambda: fpv.column_preview(self.preview_ext, {}, self.n_sel))
 
@@ -118,6 +122,11 @@ class ColumnForm(ui.RevoWindow):
              "sp_end": ui.num(self.tb_sp_end.Text, 0.10) * 1000.0,
              "end_len": ui.num(self.tb_end_len.Text, 0.60) * 1000.0,
              "cover": ui.num(self.tb_cover.Text, 0.025) * 1000.0}
+        o = ro.read(self, stagger=True)
+        for k in ("a", "b"):
+            sp = ro.hook_spec(o, k)
+            v["hook_" + k] = sp if isinstance(sp, tuple) else None
+        v["stagger"] = ro.stagger_mode(o) == hk.STAGGER_ALT
         return fpv.column_preview(self.preview_ext, v, self.n_sel)
 
     def _check(self):
@@ -137,7 +146,7 @@ class ColumnForm(ui.RevoWindow):
             self.tb_check.Text = (u"✗ ขนาดเหล็กที่เลือก ({} / {}) ยังไม่มี Bar Type "
                                   u"ในโปรเจกต์".format(main, tie))
             return None
-        return {
+        v = {
             "same": bool(self.cb_same.IsChecked),
             "replace": bool(self.cb_replace.IsChecked),
             "n": int(self.cmb_n.SelectedItem),
@@ -149,6 +158,8 @@ class ColumnForm(ui.RevoWindow):
             "end_len": ui.num(self.tb_end_len.Text, 0.60) * 1000.0,
             "cover": ui.num(self.tb_cover.Text, 0.025) * 1000.0,
         }
+        v.update(ro.read(self, stagger=True))   # รูปเหล็ก/ตะขอ/สลับจุดต่อ
+        return v
 
 
 def preview_extents(col):
@@ -174,11 +185,14 @@ if _OVR is None:
     cols = selected(uidoc, doc, DB.BuiltInCategory.OST_StructuralColumns)
     if not cols:
         ui.need_selection(u"เสา", u"(คลิกเสาที่ต้องการ แล้วกดปุ่มใหม่ — เลือกได้หลายต้น)")
-    form = ColumnForm(len(cols), types, preview_extents(cols[0]))
+    shapes_main, shapes_tie = rb.shape_names(doc)
+    form = ColumnForm(len(cols), types, preview_extents(cols[0]),
+                      (list(shapes_main), list(shapes_tie)))
     v = form.show()
     if not v:
         script.exit()
 else:
+    shapes_main, shapes_tie = rb.shape_names(doc)
     cols = hostconfig.hosts_from_override(doc, _OVR)
     v, _miss = hostconfig.override_values(_OVR, rb.BAR_NAMES, types)
     _prob = hostconfig.override_problem(cols, _miss)
@@ -199,6 +213,15 @@ d_main = rb.bar_dia_mm(v["main"])
 d_tie = rb.bar_dia_mm(v["tie"])
 cover = v["cover"]
 log = []
+# --- รูปเหล็ก/ตะขอ/สลับจุดต่อ (ไม่มีคีย์ในค่าที่จำไว้ = ค่าเดิมทั้งหมด)
+sh_main = ro.shape_choice(v, "shape_main", shapes_main)
+sh_tie = ro.shape_choice(v, "shape_tie", shapes_tie)
+for _k, _sh in (("shape_main", shapes_main), ("shape_tie", shapes_tie)):
+    _m = ro.missing_shape(v, _k, _sh)
+    if _m:
+        log.append(u"ไม่พบ Rebar Shape '{}' ในโปรเจกต์นี้ — ใช้แบบอัตโนมัติแทน".format(_m))
+hs_a, hs_b = ro.hook_spec(v, "a"), ro.hook_spec(v, "b")
+stag = ro.stagger_mode(v)
 made_main = made_tie = failed = 0
 skipped = []
 
@@ -225,6 +248,12 @@ try:
         log.append(u"ลบเหล็กเดิม {} ชิ้น".format(len(old)))
 
     hook135, _new = rb.hook_type(doc, 135, rb.HOOK135_EXT_D)
+    # ตะขอเหล็กยืน: keep = ไม่มี (พฤติกรรมเดิม) ; ใช้เฉพาะโหมดอัตโนมัติ (shape มีตะขอในตัวเอง)
+    hook_lo = rb.resolve_hook(doc, hs_a, d_main) if sh_main is None else None
+    hook_hi = rb.resolve_hook(doc, hs_b, d_main) if sh_main is None else None
+    if sh_main is not None and (hs_a != "keep" or hs_b != "keep"):
+        log.append(u"เลือก Rebar Shape เหล็กหลัก — ตัวเลือกตะขอปลายซ้าย/ขวาถูกข้าม (ใช้ตะขอในตัว shape)")
+    lap_mm_ = hk.lap_mm(d_main, v["lap_d"])
     lap = mm_to_ft(v["lap_d"] * d_main)
     inset_main = mm_to_ft(cover + d_tie + d_main / 2.0)
     inset_tie = mm_to_ft(cover + d_tie / 2.0)
@@ -247,11 +276,32 @@ try:
 
         created = []
         # --- เหล็กยืน
-        for (x, y) in main_positions(v["n"], x0 + inset_main, x1 - inset_main,
-                                     y0 + inset_main, y1 - inset_main):
-            r = rb.create(doc, col, main_t,
-                          [rb.line(P(x, y, z0), P(x, y, z1 + lap))],
-                          tf.BasisX)
+        cx, cy = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+        for i, (x, y) in enumerate(main_positions(
+                v["n"], x0 + inset_main, x1 - inset_main,
+                y0 + inset_main, y1 - inset_main)):
+            top = z1 + lap + mm_to_ft(hk.stagger_extra_mm(i, lap_mm_, stag))
+            # ทิศเข้าหาแกนเสา (ตะขอ/ขา L หันเข้าใน): แกนที่ห่างศูนย์กลางมากกว่าตามสัดส่วน
+            dx, dy = x - cx, y - cy
+            if abs(dx) / max(w / 2.0, 1e-9) >= abs(dy) / max(h / 2.0, 1e-9):
+                inward = tf.BasisX.Multiply(-1.0 if dx > 0 else 1.0)
+            else:
+                inward = tf.BasisY.Multiply(-1.0 if dy > 0 else 1.0)
+            if sh_main is not None:
+                L_ = top - z0
+                r = rb.create_from_shape(
+                    doc, col, sh_main, main_t, P(x, y, z0),
+                    tf.BasisZ.Multiply(L_),
+                    inward.Multiply(rb.short_side_ft(L_, mm_to_ft(d_main))))
+            elif hook_lo is not None or hook_hi is not None:
+                nrm = tf.BasisZ.CrossProduct(inward).Normalize()   # ขางอ Left ชี้เข้าใน
+                r = rb.create(doc, col, main_t,
+                              [rb.line(P(x, y, z0), P(x, y, top))], nrm,
+                              hook_start=hook_lo, hook_end=hook_hi)
+            else:
+                r = rb.create(doc, col, main_t,
+                              [rb.line(P(x, y, z0), P(x, y, top))],
+                              tf.BasisX)
             if r is None:
                 failed += 1
             else:
@@ -279,9 +329,14 @@ try:
                     rb.line(P(b, c, zz), P(b, d, zz)),
                     rb.line(P(b, d, zz), P(a, d, zz)),
                     rb.line(P(a, d, zz), P(a, c, zz))]
-            r = rb.create(doc, col, tie_t, loop, tf.BasisZ,
-                          style=DB.Structure.RebarStyle.StirrupTie,
-                          hook_start=hook135, hook_end=hook135)
+            if sh_tie is not None:
+                r = rb.create_from_shape(
+                    doc, col, sh_tie, tie_t, P(a, c, zz),
+                    tf.BasisX.Multiply(b - a), tf.BasisY.Multiply(d - c))
+            else:
+                r = rb.create(doc, col, tie_t, loop, tf.BasisZ,
+                              style=DB.Structure.RebarStyle.StirrupTie,
+                              hook_start=hook135, hook_end=hook135)
             if r is None:
                 failed += 1
                 continue
