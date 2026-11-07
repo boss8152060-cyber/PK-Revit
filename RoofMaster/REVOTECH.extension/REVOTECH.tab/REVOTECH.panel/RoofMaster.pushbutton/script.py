@@ -16,6 +16,8 @@
 ต้องเลือก Roof ก่อนกด — ทำเฉพาะหลังที่เลือก (ส่งผลทุกขั้น)
 """
 
+import io
+import json
 import os
 import traceback
 from pyrevit import revit, DB, forms, script
@@ -48,40 +50,50 @@ if not _roofs_at_start:
 
 # ===================== ฟอร์ม (WPF ธีมเข้ม-ส้ม REVOTECH) =====================
 
-# คำค้นสำหรับเลือก type อัตโนมัติ (key = ชื่อ combobox)
-AUTO_PICK = [
-    ("cmb_hip", u"ตะเข้สัน"),
-    ("cmb_ridge", u"อกไก่"),
-    ("cmb_purlin", u"แป"),
-    ("cmb_rafter", u"จันทัน"),
-    ("cmb_gutter", u"รางน้ำ"),
-    ("cmb_dang", u"ดั้ง"),
-]
-NONE_LABEL = u"— ไม่ระบุ (ค้นหาตามชื่อแบบเดิม) —"
+# ชื่อ combobox ที่ต้องเลือก type (ไม่เดาจากคำในชื่อ — ผู้ใช้เลือกเองจาก Family จริง
+# แล้วระบบจำค่าที่เลือกล่าสุดไว้ใน %LOCALAPPDATA%\REVOTECH\roofmaster_last.json)
+TYPE_COMBOS = ["cmb_hip", "cmb_ridge", "cmb_purlin", "cmb_rafter",
+               "cmb_gutter", "cmb_dang"]
+NONE_LABEL = u"— ยังไม่เลือก —"
+_LAST_FILE = os.path.join(
+    os.environ.get("LOCALAPPDATA", os.path.expanduser("~")),
+    "REVOTECH", "roofmaster_last.json")
 
 
-def _scan_framing_types():
-    names = []
-    for t in DB.FilteredElementCollector(doc)               .OfCategory(DB.BuiltInCategory.OST_StructuralFraming)               .WhereElementIsElementType():
-        try:
-            nm = DB.Element.Name.__get__(t)
-        except Exception:
-            continue
-        names.append(nm)
-    return sorted(set(names))
-
-
-def _scan_column_types():
-    """type เสา (Structural Column) — ดั้งเป็นเสาสั้น จึงต้องโชว์ใน dropdown ดั้งด้วย"""
-    names = []
-    for t in DB.FilteredElementCollector(doc) \
-               .OfCategory(DB.BuiltInCategory.OST_StructuralColumns) \
+def _scan_types(bic):
+    """type ทั้งหมดของหมวด bic เป็นรายการ (ป้าย 'Family : Type', ชื่อ type)"""
+    out = []
+    for t in DB.FilteredElementCollector(doc).OfCategory(bic) \
                .WhereElementIsElementType():
         try:
-            names.append(DB.Element.Name.__get__(t))
+            tname = DB.Element.Name.__get__(t)
         except Exception:
             continue
-    return sorted(set(names))
+        try:
+            fam = t.FamilyName
+        except Exception:
+            fam = u""
+        out.append((u"{} : {}".format(fam, tname) if fam else tname, tname))
+    return sorted(set(out))
+
+
+def _load_last():
+    try:
+        with io.open(_LAST_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _save_last(d):
+    try:
+        folder = os.path.dirname(_LAST_FILE)
+        if not os.path.isdir(folder):
+            os.makedirs(folder)
+        with io.open(_LAST_FILE, "w", encoding="utf-8") as f:
+            f.write(json.dumps(d, ensure_ascii=False))
+    except Exception:
+        pass
 
 
 class MasterForm(forms.WPFWindow):
@@ -111,28 +123,24 @@ class MasterForm(forms.WPFWindow):
                                     for cb in self._step_boxes())
 
     def _fill_types(self):
-        """เติม dropdown ด้วย type เหล็กในโปรเจกต์ + เลือกอัตโนมัติจากคำในชื่อ"""
-        framing_names = _scan_framing_types()
-        dang_names = sorted(set(_scan_column_types() + framing_names))
-        for cmb_name, kw in AUTO_PICK:
-            names = dang_names if cmb_name == "cmb_dang" else framing_names
+        """เติม dropdown ด้วย 'Family : Type' ของหมวดจริงในโปรเจกต์
+        (ไม่เลือกให้จากชื่อ — เลือกค่าที่ผู้ใช้ใช้ครั้งล่าสุดถ้ายังมีอยู่)"""
+        framing = _scan_types(DB.BuiltInCategory.OST_StructuralFraming)
+        columns = _scan_types(DB.BuiltInCategory.OST_StructuralColumns)
+        self._label_to_type = {}
+        last = _load_last()
+        for cmb_name in TYPE_COMBOS:
+            items = sorted(set(columns + framing)) if cmb_name == "cmb_dang" \
+                else framing
             cmb = getattr(self, cmb_name)
             cmb.Items.Add(NONE_LABEL)
-            for nm in names:
-                cmb.Items.Add(nm)
             pick = 0
-            for i, nm in enumerate(names):
-                # "แป" สั้นมาก — กันไปชนชื่ออื่นที่มีคำว่าแป (เช่น แปลง) ด้วยการ
-                # ไม่เอาชื่อที่มีคำของ type อื่นอยู่ด้วย
-                if kw in nm and not self._clash(kw, nm):
+            for i, (label, tname) in enumerate(items):
+                cmb.Items.Add(label)
+                self._label_to_type[label] = tname
+                if label == last.get(cmb_name):
                     pick = i + 1
-                    break
             cmb.SelectedIndex = pick
-
-    @staticmethod
-    def _clash(kw, nm):
-        others = [k for _, k in AUTO_PICK if k != kw and kw in k]
-        return any(o in nm for o in others)
 
     def _drag(self, sender, args):
         try:
@@ -143,15 +151,17 @@ class MasterForm(forms.WPFWindow):
     def _cancel(self, sender, args):
         self.Close()
 
-    @staticmethod
-    def _chosen(cmb):
-        """ชื่อ type ที่เลือก หรือ None ถ้าเลือก "ไม่ระบุ" """
+    def _chosen(self, cmb):
+        """ชื่อ type ที่เลือก หรือ None ถ้ายังไม่เลือก"""
         item = cmb.SelectedItem
         if item is None or item == NONE_LABEL:
             return None
-        return item
+        return self._label_to_type.get(item)
 
     def _go(self, sender, args):
+        _save_last(dict((n, getattr(self, n).SelectedItem)
+                        for n in TYPE_COMBOS
+                        if getattr(self, n).SelectedItem not in (None, NONE_LABEL)))
         self.values = {
             "do_hip": True if self.cb_hip.IsChecked else False,
             "do_purlin": True if self.cb_purlin.IsChecked else False,

@@ -228,7 +228,7 @@
                     <TextBlock Grid.Row="5" Text="ดั้ง" FontSize="12.5" VerticalAlignment="Center"/>
                     <ComboBox x:Name="cmb_dang" Grid.Row="5" Grid.Column="1" Margin="0,0,0,6" Height="26"/>
                 </Grid>
-                <TextBlock Text="ระบบเลือกให้เองจากชื่อที่มีคำนั้น (ตะเข้สัน, อกไก่, แป, จันทัน, รางน้ำ, ดั้ง) — เปลี่ยนได้ ถ้าเลือก “ไม่ระบุ” จะใช้การค้นหาตามชื่อแบบเดิม (ตะเข้ราง/รางน้ำ ไม่มีก็ได้ — สร้างให้อัตโนมัติ)"
+                <TextBlock Text="เลือกจาก Family จริงในโปรเจกต์ (ระบบจำค่าที่เลือกล่าสุดให้) — ถ้ายังไม่เลือก จะค้นหาตามชื่อแบบเดิม (ตะเข้ราง/รางน้ำ ไม่มีก็ได้ — สร้างให้อัตโนมัติ)"
                            FontSize="10" Foreground="{StaticResource TxtDim}"
                            TextWrapping="Wrap" Margin="0,2,0,0"/>
                 <TextBlock Text="เลือกหลังคาก่อนกด  •  Ctrl+Z ครั้งเดียวย้อนทั้งชุด"
