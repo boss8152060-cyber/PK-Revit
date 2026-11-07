@@ -1,0 +1,42 @@
+<TextBlock x:Name="tb_info" FontSize="12" TextWrapping="Wrap"
+           Foreground="{StaticResource TxtDim}"/>
+<CheckBox x:Name="cb_replace" Content="แทนที่วัสดุมุง REVOTECH เดิมของหลังคาเหล่านี้" IsChecked="True"/>
+
+<TextBlock Text="1) แผ่นหลังคา" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<CheckBox x:Name="cb_sheet" Content="สร้างแผ่นมุงเต็มทุกผืน" IsChecked="True"/>
+<ComboBox x:Name="cmb_sheet" Height="26" Margin="0,4,0,4"/>
+<StackPanel Orientation="Horizontal">
+    <TextBlock Text="ความหนา (มม.) 0 = ตาม type  " VerticalAlignment="Center"/>
+    <TextBox x:Name="tb_sheet_t" Text="0"/>
+</StackPanel>
+
+<TextBlock Text="2) ครอบสัน + ครอบตะเฆ่สัน" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<CheckBox x:Name="cb_ridge" Content="สร้างครอบตามแนวสัน/ตะเฆ่สัน" IsChecked="True"/>
+<ComboBox x:Name="cmb_ridge" Height="26" Margin="0,4,0,4"/>
+<StackPanel Orientation="Horizontal">
+    <TextBlock Text="กว้าง (มม.)  " VerticalAlignment="Center"/>
+    <TextBox x:Name="tb_cap_w" Text="300"/>
+    <TextBlock Text="   สูง (มม.)  " VerticalAlignment="Center"/>
+    <TextBox x:Name="tb_cap_h" Text="80"/>
+</StackPanel>
+
+<TextBlock Text="3) ครอบข้าง (ปั้นลม) — ยังพัฒนาอยู่" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<CheckBox x:Name="cb_verge" Content="สร้างครอบข้างตามขอบลาด (ทดลอง)" IsChecked="False"/>
+<ComboBox x:Name="cmb_verge" Height="26" Margin="0,4,0,4"/>
+
+<TextBlock Text="4) เชิงชาย" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<CheckBox x:Name="cb_fascia" Content="สร้างเชิงชายตามขอบชายคา" IsChecked="True"/>
+<ComboBox x:Name="cmb_fascia" Height="26" Margin="0,4,0,4"/>
+<StackPanel Orientation="Horizontal">
+    <TextBlock Text="สูง (มม.)  " VerticalAlignment="Center"/>
+    <TextBox x:Name="tb_fas_h" Text="200"/>
+    <TextBlock Text="   หนา (มม.)  " VerticalAlignment="Center"/>
+    <TextBox x:Name="tb_fas_t" Text="30"/>
+</StackPanel>
+
+<TextBlock x:Name="tb_check" FontSize="11" TextWrapping="Wrap" Margin="0,12,0,4"
+           Foreground="{StaticResource TxtDim}"/>
