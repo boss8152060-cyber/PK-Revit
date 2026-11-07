@@ -108,7 +108,7 @@
             <StackPanel Margin="24,12,24,0">
                 <TextBlock Text="ขั้นตอน (เรียงตามลำดับที่รันจริง)" FontSize="11.5"
                            Foreground="{StaticResource Accent}" FontWeight="SemiBold"/>
-                <CheckBox x:Name="cb_all" Content="ทั้งหมด (4 ขั้น)"
+                <CheckBox x:Name="cb_all" Content="ทั้งหมด (5 ขั้น)"
                           IsChecked="True" FontWeight="SemiBold"/>
                 <CheckBox x:Name="cb_hip" Content="1)  ตะเข้สัน + อกไก่   (Hip Ridge Gen)"
                           IsChecked="True"/>
@@ -117,6 +117,8 @@
                 <CheckBox x:Name="cb_valley" Content="3)  รางน้ำ + ตะเข้ราง   (Valley Gen)"
                           IsChecked="True"/>
                 <CheckBox x:Name="cb_rafter" Content="4)  จันทัน   (Rafter Gen)"
+                          IsChecked="True"/>
+                <CheckBox x:Name="cb_dang" Content="5)  ดั้ง (Dang Gen)"
                           IsChecked="True"/>
             </StackPanel>
 
@@ -136,6 +138,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
@@ -168,7 +171,7 @@
                                    TextWrapping="Wrap"/>
                     </StackPanel>
                     <TextBox x:Name="tb_eave" Grid.Row="1" Grid.Column="1"
-                             Text="340" VerticalAlignment="Center" Margin="0,0,0,4"/>
+                             Text="340" VerticalAlignment="Center" Margin="0,0,0,12"/>
 
                     <StackPanel Grid.Row="1" Grid.Column="3" Margin="0,0,8,4"
                                 VerticalAlignment="Center">
@@ -178,7 +181,17 @@
                                    TextWrapping="Wrap"/>
                     </StackPanel>
                     <TextBox x:Name="tb_ridge" Grid.Row="1" Grid.Column="4"
-                             Text="50" VerticalAlignment="Center" Margin="0,0,0,4"/>
+                             Text="50" VerticalAlignment="Center" Margin="0,0,0,12"/>
+
+                    <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,8,4"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="ความสูงดั้ง (สำรอง)" FontSize="13"/>
+                        <TextBlock Text="ใช้เมื่อหาโครงรับด้านล่างไม่เจอ"
+                                   FontSize="10" Foreground="{StaticResource TxtDim}"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <TextBox x:Name="tb_dang" Grid.Row="2" Grid.Column="1"
+                             Text="1000" VerticalAlignment="Center" Margin="0,0,0,4"/>
                 </Grid>
             </StackPanel>
 
@@ -200,6 +213,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Text="ตะเข้สัน" FontSize="12.5" VerticalAlignment="Center"/>
                     <ComboBox x:Name="cmb_hip" Grid.Row="0" Grid.Column="1" Margin="0,0,0,6" Height="26"/>
@@ -211,8 +225,10 @@
                     <ComboBox x:Name="cmb_rafter" Grid.Row="3" Grid.Column="1" Margin="0,0,0,6" Height="26"/>
                     <TextBlock Grid.Row="4" Text="รางน้ำ" FontSize="12.5" VerticalAlignment="Center"/>
                     <ComboBox x:Name="cmb_gutter" Grid.Row="4" Grid.Column="1" Margin="0,0,0,6" Height="26"/>
+                    <TextBlock Grid.Row="5" Text="ดั้ง" FontSize="12.5" VerticalAlignment="Center"/>
+                    <ComboBox x:Name="cmb_dang" Grid.Row="5" Grid.Column="1" Margin="0,0,0,6" Height="26"/>
                 </Grid>
-                <TextBlock Text="ระบบเลือกให้เองจากชื่อที่มีคำนั้น (ตะเข้สัน, อกไก่, แป, จันทัน, รางน้ำ) — เปลี่ยนได้ ถ้าเลือก “ไม่ระบุ” จะใช้การค้นหาตามชื่อแบบเดิม (ตะเข้ราง/รางน้ำ ไม่มีก็ได้ — สร้างให้อัตโนมัติ)"
+                <TextBlock Text="ระบบเลือกให้เองจากชื่อที่มีคำนั้น (ตะเข้สัน, อกไก่, แป, จันทัน, รางน้ำ, ดั้ง) — เปลี่ยนได้ ถ้าเลือก “ไม่ระบุ” จะใช้การค้นหาตามชื่อแบบเดิม (ตะเข้ราง/รางน้ำ ไม่มีก็ได้ — สร้างให้อัตโนมัติ)"
                            FontSize="10" Foreground="{StaticResource TxtDim}"
                            TextWrapping="Wrap" Margin="0,2,0,0"/>
                 <TextBlock Text="เลือกหลังคาก่อนกด  •  Ctrl+Z ครั้งเดียวย้อนทั้งชุด"

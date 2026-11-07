@@ -1,0 +1,18 @@
+<TextBlock x:Name="lb_status" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,0,0,6"/>
+<TextBlock x:Name="tb_status" FontSize="12" TextWrapping="Wrap"/>
+
+<TextBlock x:Name="lb_machine" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<TextBox x:Name="tb_machine" IsReadOnly="True"/>
+
+<TextBlock x:Name="lb_key" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<TextBox x:Name="tb_key" MaxLength="40"/>
+<TextBlock x:Name="tb_msg" FontSize="11.5" TextWrapping="Wrap" Margin="0,6,0,0"/>
+
+<TextBlock x:Name="lb_lang" FontSize="11.5" Foreground="{StaticResource Accent}"
+           FontWeight="SemiBold" Margin="0,14,0,6"/>
+<ComboBox x:Name="cmb_lang" Height="26"/>
+<TextBlock x:Name="tb_note" FontSize="10" Foreground="{StaticResource TxtDim}"
+           TextWrapping="Wrap" Margin="0,6,0,0"/>

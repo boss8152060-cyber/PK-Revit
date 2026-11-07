@@ -7,6 +7,7 @@
   2) Purlin Gen     — แป (+ตัดเฉียงที่ตะเข้ +จอยหลังคา)
   3) Valley Gen     — รางน้ำ + ตะเข้ราง
   4) Rafter Gen     — จันทัน (mirror layout +ตัดหัวเข้าตะเข้/ราง)
+  5) Dang Gen       — ดั้ง (เสาสั้นรับอกไก่/จุดรวมตะเข้สัน ลงถึงโครงรับ)
 
 กลไก: execfile สคริปต์ปุ่มลูกตัวจริง (ไม่ก็อปโค้ดมาซ้ำ — แก้ปุ่มลูก
 ที่เดียวมีผลทั้งคู่) พร้อม inject CONFIG_OVERRIDE จากฟอร์ม
@@ -54,6 +55,7 @@ AUTO_PICK = [
     ("cmb_purlin", u"แป"),
     ("cmb_rafter", u"จันทัน"),
     ("cmb_gutter", u"รางน้ำ"),
+    ("cmb_dang", u"ดั้ง"),
 ]
 NONE_LABEL = u"— ไม่ระบุ (ค้นหาตามชื่อแบบเดิม) —"
 
@@ -66,6 +68,19 @@ def _scan_framing_types():
         except Exception:
             continue
         names.append(nm)
+    return sorted(set(names))
+
+
+def _scan_column_types():
+    """type เสา (Structural Column) — ดั้งเป็นเสาสั้น จึงต้องโชว์ใน dropdown ดั้งด้วย"""
+    names = []
+    for t in DB.FilteredElementCollector(doc) \
+               .OfCategory(DB.BuiltInCategory.OST_StructuralColumns) \
+               .WhereElementIsElementType():
+        try:
+            names.append(DB.Element.Name.__get__(t))
+        except Exception:
+            continue
     return sorted(set(names))
 
 
@@ -83,7 +98,8 @@ class MasterForm(forms.WPFWindow):
         self._fill_types()
 
     def _step_boxes(self):
-        return [self.cb_hip, self.cb_purlin, self.cb_valley, self.cb_rafter]
+        return [self.cb_hip, self.cb_purlin, self.cb_valley, self.cb_rafter,
+                self.cb_dang]
 
     def _toggle_all(self, sender, args):
         on = bool(self.cb_all.IsChecked)
@@ -96,8 +112,10 @@ class MasterForm(forms.WPFWindow):
 
     def _fill_types(self):
         """เติม dropdown ด้วย type เหล็กในโปรเจกต์ + เลือกอัตโนมัติจากคำในชื่อ"""
-        names = _scan_framing_types()
+        framing_names = _scan_framing_types()
+        dang_names = sorted(set(_scan_column_types() + framing_names))
         for cmb_name, kw in AUTO_PICK:
+            names = dang_names if cmb_name == "cmb_dang" else framing_names
             cmb = getattr(self, cmb_name)
             cmb.Items.Add(NONE_LABEL)
             for nm in names:
@@ -139,6 +157,8 @@ class MasterForm(forms.WPFWindow):
             "do_purlin": True if self.cb_purlin.IsChecked else False,
             "do_valley": True if self.cb_valley.IsChecked else False,
             "do_rafter": True if self.cb_rafter.IsChecked else False,
+            "do_dang": True if self.cb_dang.IsChecked else False,
+            "dang_len": self.tb_dang.Text,
             "purlin_sp": self.tb_purlin.Text,
             "eave_off": self.tb_eave.Text,
             "ridge_off": self.tb_ridge.Text,
@@ -148,6 +168,7 @@ class MasterForm(forms.WPFWindow):
             "t_purlin": self._chosen(self.cmb_purlin),
             "t_rafter": self._chosen(self.cmb_rafter),
             "t_gutter": self._chosen(self.cmb_gutter),
+            "t_dang": self._chosen(self.cmb_dang),
         }
         self.Close()
 
@@ -199,6 +220,7 @@ def only(d):
 T_HIP, T_RIDGE = v.get("t_hip"), v.get("t_ridge")
 T_PURLIN, T_RAFTER, T_GUTTER = (v.get("t_purlin"), v.get("t_rafter"),
                                 v.get("t_gutter"))
+T_DANG = v.get("t_dang")
 _hip_hit = [x for x in (T_HIP, T_RIDGE) if x]
 
 STEPS = []
@@ -226,6 +248,13 @@ if v.get("do_rafter"):
         "FIXED_SPACING_MM": num("rafter_sp", 1000),
         "TYPE_KEYWORDS": kw(T_RAFTER),
         "HIP_TYPE_KEYWORDS": _hip_hit or None,
+    })))
+if v.get("do_dang"):
+    STEPS.append((u"5) ดั้ง", "DangGen.pushbutton", only({
+        "FALLBACK_LENGTH_MM": num("dang_len", 1000),
+        "TYPE_KEYWORDS": kw(T_DANG),
+        "HIP_TYPE_KEYWORDS": kw(T_HIP),
+        "RIDGE_TYPE_KEYWORDS": kw(T_RIDGE),
     })))
 if not STEPS:
     forms.alert(u"ไม่ได้เลือกขั้นตอนไหนเลย", exitscript=True)
@@ -285,6 +314,16 @@ def _count_framing():
         except Exception:
             continue
         counts[nm] = counts.get(nm, 0) + 1
+    # ดั้งเป็น Structural Column
+    for e in DB.FilteredElementCollector(doc) \
+               .OfCategory(DB.BuiltInCategory.OST_StructuralColumns) \
+               .WhereElementIsNotElementType():
+        try:
+            t = doc.GetElement(e.GetTypeId())
+            nm = DB.Element.Name.__get__(t)
+        except Exception:
+            continue
+        counts[nm] = counts.get(nm, 0) + 1
     return counts
 
 
@@ -297,6 +336,7 @@ def _summary_lines():
             (u"แป", T_PURLIN, [u"แป"]),
             (u"จันทัน", T_RAFTER, [u"จันทัน"]),
             (u"รางน้ำ", T_GUTTER, [u"รางน้ำ"]),
+            (u"ดั้ง", T_DANG, [u"ดั้ง"]),
             (u"ตะเข้ราง", None, [u"ตะเข้ราง"])):
         if chosen:
             n = counts.get(chosen, 0)
